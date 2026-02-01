@@ -1,241 +1,120 @@
+import React, { useState, useEffect } from 'react';
+import { MessageSquare, Heart, Share2, Image as ImageIcon, Send, User, MessageCircle, MoreVertical } from 'lucide-react';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { 
-  MessageCircle, Heart, Share2, MapPin, Image as ImageIcon, 
-  Send, Plus, X, Search, Filter, ThumbsUp, User, Users
-} from 'lucide-react';
-import { ForumPost } from '../types';
+export default function CommunityForum() { // Isay 'CommunityPage' se badal kar 'CommunityForum' kar dein
+  const [posts, setPosts] = useState<any[]>([]);
+  const [newPost, setNewPost] = useState('');
+  const puter = (window as any).puter;
 
-const INITIAL_POSTS: ForumPost[] = [
-  {
-    id: '1',
-    author: 'Bashir Ahmed',
-    location: 'Sopore',
-    content: 'Has anyone started the Dormant Oil spray yet? The weather seems clear for the next 3 days.',
-    category: 'General',
-    likes: 12,
-    comments: [
-      { id: 'c1', author: 'Altaf Bhat', text: 'Yes, I started yesterday. Make sure to mix it properly.', timestamp: new Date().toISOString() }
-    ],
-    timestamp: new Date(Date.now() - 86400000).toISOString()
-  },
-  {
-    id: '2',
-    author: 'Gulzar Dar',
-    location: 'Shopian',
-    content: 'Found these spots on my Gala leaves. Is this Alternaria or Scab? Please help.',
-    image: 'https://images.unsplash.com/photo-1628260412197-76296302213a?q=80&w=400',
-    category: 'Disease',
-    likes: 8,
-    comments: [],
-    timestamp: new Date(Date.now() - 172800000).toISOString()
-  }
-];
-
-const CommunityForum: React.FC = () => {
-  const [posts, setPosts] = useState<ForumPost[]>(() => {
-    const saved = localStorage.getItem('fck_forum_posts');
-    return saved ? JSON.parse(saved) : INITIAL_POSTS;
-  });
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newPostContent, setNewPostContent] = useState('');
-  const [newPostImage, setNewPostImage] = useState<string | null>(null);
-  const [newPostCategory, setNewPostCategory] = useState<ForumPost['category']>('General');
-  const [filterCategory, setFilterCategory] = useState('All');
-  
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    localStorage.setItem('fck_forum_posts', JSON.stringify(posts));
-  }, [posts]);
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setNewPostImage(reader.result as string);
-      reader.readAsDataURL(file);
+  // Fetching Community Posts
+  const fetchPosts = async () => {
+    const res = await puter.kv.get('fck_community_posts');
+    if (res) setPosts(JSON.parse(res));
+    else {
+      // Sample Initial Posts for Kashmir
+      setPosts([
+        { id: 1, user: 'Gulzar Ahmad', location: 'Kulgam', text: 'Bhaiyo, is baar Scab ka hamla kam hai ya zyada?', likes: 12, comments: 4, time: '2h ago' },
+        { id: 2, user: 'Shabir Dar', location: 'Sopore', text: 'Mandi mein Delicious ka rate aaj behtar hai.', likes: 25, comments: 8, time: '5h ago' }
+      ]);
     }
   };
 
-  const createPost = () => {
-    if (!newPostContent.trim()) return;
-    
-    const post: ForumPost = {
-      id: Date.now().toString(),
-      author: 'You (Farmer)',
-      location: 'Srinagar', // Defaults to current user location in real app
-      content: newPostContent,
-      image: newPostImage || undefined,
-      category: newPostCategory,
+  const handlePost = async () => {
+    if (!newPost) return;
+    const post = {
+      id: Date.now(),
+      user: 'Me (Aap)', // User profile integration
+      location: 'Kulgam', 
+      text: newPost,
       likes: 0,
-      comments: [],
-      timestamp: new Date().toISOString()
+      comments: 0,
+      time: 'Just now'
     };
-
-    setPosts([post, ...posts]);
-    setIsModalOpen(false);
-    setNewPostContent('');
-    setNewPostImage(null);
+    const updatedPosts = [post, ...posts];
+    setPosts(updatedPosts);
+    await puter.kv.set('fck_community_posts', JSON.stringify(updatedPosts));
+    setNewPost('');
   };
 
-  const likePost = (id: string) => {
-    setPosts(posts.map(p => p.id === id ? { ...p, likes: p.likes + 1 } : p));
-  };
-
-  const filteredPosts = filterCategory === 'All' 
-    ? posts 
-    : posts.filter(p => p.category === filterCategory);
+  useEffect(() => { fetchPosts(); }, []);
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in duration-700 pb-20 no-scrollbar">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 bg-emerald-900 text-white rounded-[2rem] flex items-center justify-center shadow-2xl">
-            <Users className="w-8 h-8" />
-          </div>
-          <div>
-            <h2 className="text-3xl font-heading font-bold text-slate-900">Kisan Baithak</h2>
-            <p className="text-slate-500 font-medium">The Valley's Digital Village Square.</p>
-          </div>
+    <div className="p-4 md:p-10 space-y-8 text-right bg-black min-h-screen text-white pb-32" dir="rtl">
+      
+      {/* Header */}
+      <header className="bg-indigo-600/10 p-8 rounded-[3rem] border border-indigo-500/20 flex justify-between items-center shadow-2xl">
+        <div className="text-right">
+          <h1 className="text-4xl font-black font-urdu text-indigo-400">کسان برادری (Community)</h1>
+          <p className="text-[10px] text-indigo-500/40 font-black uppercase tracking-widest mt-2 flex items-center justify-end gap-2 italic">
+             <MessageCircle size={12}/> Connect with Farmers across J&K
+          </p>
         </div>
-        <button 
-          onClick={() => setIsModalOpen(true)}
-          className="bg-emerald-600 text-white px-6 py-4 rounded-2xl font-bold flex items-center gap-2 shadow-xl hover:bg-emerald-700 transition-all active:scale-95"
-        >
-          <Plus className="w-5 h-5" /> New Discussion
-        </button>
+        <div className="bg-indigo-600 p-4 rounded-3xl text-white shadow-xl">
+           <MessageSquare size={40} />
+        </div>
       </header>
 
-      {/* Filters */}
-      <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
-        {['All', 'General', 'Disease', 'Market', 'Machinery'].map(cat => (
-          <button
-            key={cat}
-            onClick={() => setFilterCategory(cat)}
-            className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap ${
-              filterCategory === cat 
-                ? 'bg-slate-900 text-white shadow-lg' 
-                : 'bg-white text-slate-400 border border-slate-100 hover:border-slate-300'
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
-
-      {/* Feed */}
-      <div className="space-y-6">
-        {filteredPosts.map(post => (
-          <div key={post.id} className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex justify-between items-start mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-700 font-bold">
-                  {post.author[0]}
-                </div>
-                <div>
-                  <h4 className="font-bold text-slate-900 leading-tight">{post.author}</h4>
-                  <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                    <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {post.location}</span>
-                    <span>• {new Date(post.timestamp).toLocaleDateString()}</span>
-                  </div>
-                </div>
-              </div>
-              <span className={`text-[9px] font-black uppercase px-3 py-1 rounded-full ${
-                post.category === 'Disease' ? 'bg-rose-50 text-rose-600' :
-                post.category === 'Market' ? 'bg-amber-50 text-amber-600' :
-                'bg-slate-100 text-slate-500'
-              }`}>
-                {post.category}
-              </span>
-            </div>
-
-            <p className="text-slate-700 font-medium leading-relaxed mb-4">{post.content}</p>
-
-            {post.image && (
-              <div className="mb-4 rounded-3xl overflow-hidden border border-slate-100">
-                <img src={post.image} alt="Post attachment" className="w-full h-auto max-h-80 object-cover" />
-              </div>
-            )}
-
-            <div className="flex items-center gap-6 pt-4 border-t border-slate-50">
-              <button 
-                onClick={() => likePost(post.id)}
-                className="flex items-center gap-2 text-slate-400 hover:text-rose-500 transition-colors font-bold text-xs uppercase tracking-widest group"
-              >
-                <Heart className="w-5 h-5 group-hover:fill-current" /> {post.likes} Likes
-              </button>
-              <button className="flex items-center gap-2 text-slate-400 hover:text-blue-500 transition-colors font-bold text-xs uppercase tracking-widest">
-                <MessageCircle className="w-5 h-5" /> {post.comments.length} Comments
-              </button>
-              <button className="ml-auto text-slate-400 hover:text-emerald-600">
-                <Share2 className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Create Post Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-md">
-          <div className="bg-white w-full max-w-lg rounded-[3rem] shadow-2xl p-8 space-y-6 animate-in zoom-in-95">
-            <div className="flex justify-between items-center">
-              <h3 className="text-2xl font-bold text-slate-900">Create New Post</h3>
-              <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full"><X className="w-6 h-6" /></button>
-            </div>
-            
-            <textarea
-              placeholder="What's happening on your farm?"
-              value={newPostContent}
-              onChange={(e) => setNewPostContent(e.target.value)}
-              className="w-full h-32 p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-emerald-500/10 font-medium resize-none"
+      {/* Create Post Box */}
+      <div className="bg-[#0a0a0a] p-8 rounded-[3.5rem] border border-white/10 shadow-inner">
+         <div className="flex gap-4 mb-6">
+            <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shrink-0"><User size={24}/></div>
+            <textarea 
+              value={newPost}
+              onChange={(e) => setNewPost(e.target.value)}
+              placeholder="آج آپ کے باغ میں کیا ہو رہا ہے؟"
+              className="w-full bg-transparent border-none text-xl font-urdu text-white outline-none resize-none"
+              rows={2}
             />
+         </div>
+         <div className="flex justify-between items-center border-t border-white/5 pt-6">
+            <button className="flex items-center gap-2 text-slate-500 hover:text-indigo-400 transition-all font-urdu">
+               <ImageIcon size={20}/> تصویر شامل کریں
+            </button>
+            <button 
+              onClick={handlePost}
+              className="bg-indigo-600 text-white px-8 py-3 rounded-2xl font-black text-xs uppercase flex items-center gap-2 hover:bg-indigo-500 transition-all shadow-lg"
+            >
+               پوسٹ کریں <Send size={16}/>
+            </button>
+         </div>
+      </div>
 
-            {newPostImage && (
-              <div className="relative rounded-2xl overflow-hidden h-32 w-full">
-                <img src={newPostImage} alt="Preview" className="w-full h-full object-cover" />
-                <button onClick={() => setNewPostImage(null)} className="absolute top-2 right-2 bg-black/50 text-white p-1 rounded-full"><X className="w-4 h-4" /></button>
-              </div>
-            )}
-
-            <div className="flex gap-4">
-              <div className="flex-1">
-                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Category</label>
-                <select 
-                  value={newPostCategory}
-                  onChange={(e) => setNewPostCategory(e.target.value as any)}
-                  className="w-full mt-2 p-3 bg-slate-50 border rounded-xl font-bold text-sm outline-none"
-                >
-                  <option>General</option>
-                  <option>Disease</option>
-                  <option>Market</option>
-                  <option>Machinery</option>
-                </select>
-              </div>
-              <div className="flex items-end">
-                <button 
-                  onClick={() => fileInputRef.current?.click()}
-                  className="p-3 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-100 transition-colors"
-                >
-                  <ImageIcon className="w-6 h-6" />
-                </button>
-                <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" />
-              </div>
+      {/* Community Feed */}
+      <div className="space-y-6">
+        {posts.map((post) => (
+          <div key={post.id} className="bg-[#0a0a0a] p-8 rounded-[3.5rem] border border-white/5 hover:border-indigo-500/20 transition-all shadow-xl">
+            <div className="flex justify-between items-start mb-6">
+               <button className="text-slate-700"><MoreVertical size={20}/></button>
+               <div className="flex items-center gap-4">
+                  <div className="text-right">
+                     <h4 className="font-black font-urdu text-xl text-white">{post.user}</h4>
+                     <p className="text-[10px] text-indigo-500 font-black uppercase tracking-widest">{post.location} • {post.time}</p>
+                  </div>
+                  <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-indigo-400">
+                     <User size={24}/>
+                  </div>
+               </div>
             </div>
 
-            <button 
-              onClick={createPost}
-              disabled={!newPostContent.trim()}
-              className="w-full bg-emerald-900 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-xl hover:bg-black transition-all disabled:opacity-50"
-            >
-              <Send className="w-5 h-5" /> Post to Community
-            </button>
+            <p className="text-2xl font-urdu text-slate-200 leading-relaxed mb-8 pr-2">
+               {post.text}
+            </p>
+
+            <div className="flex items-center gap-8 border-t border-white/5 pt-6 pr-2">
+               <button className="flex items-center gap-2 text-slate-500 hover:text-rose-500 transition-all group">
+                  <Heart size={20} className="group-hover:fill-rose-500"/> <span className="text-sm font-black">{post.likes}</span>
+               </button>
+               <button className="flex items-center gap-2 text-slate-500 hover:text-indigo-400 transition-all">
+                  <MessageCircle size={20}/> <span className="text-sm font-black">{post.comments}</span>
+               </button>
+               <button className="flex items-center gap-2 text-slate-500 hover:text-emerald-400 transition-all">
+                  <Share2 size={20}/>
+               </button>
+            </div>
           </div>
-        </div>
-      )}
+        ))}
+      </div>
+
     </div>
   );
-};
-
-export default CommunityForum;
+}

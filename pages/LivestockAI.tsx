@@ -1,92 +1,119 @@
-import React, { useState, useRef } from 'react';
-import { Camera, Heart, Loader2, Volume2, Rabbit, Syringe, RefreshCw } from 'lucide-react';
+import React, { useState } from 'react';
+import { Rabbit, ShieldCheck, Thermometer, Syringe, MessageCircle, AlertCircle, Bot, Send } from 'lucide-react';
 import { askAI } from '../services/puterService';
 
-const LivestockAI: React.FC = () => {
-  const [image, setImage] = useState<string | null>(null);
+export default function LivestockAI() {
+  const [query, setQuery] = useState('');
+  const [response, setResponse] = useState('');
   const [loading, setLoading] = useState(false);
-  const [animal, setAnimal] = useState('Sheep');
-  const [analysis, setAnalysis] = useState<any>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const processImage = async (imgBase64: string) => {
+  // Kashmir Specific Livestock Advice
+  const handleAskAI = async () => {
+    if (!query) return;
     setLoading(true);
-    try {
-      // Puter AI Prompt for Livestock
-      const prompt = `System: You are a Veterinary AI specialized in Kashmiri livestock.
-      Task: Analyze this ${animal} health data.
-      Output JSON: {"condition": "Name", "severity": "High/Low", "advice": "Treatment", "urduSummary": "Urdu Translation"}`;
-      
-      const res = await askAI(`${prompt} [Image Data: ${imgBase64.substring(0, 50)}...]`, false);
-      const match = res?.match(/\{.*\}/s);
-      if (match) setAnalysis(JSON.parse(match[0]));
-    } catch (err) {
-      console.error("Vet AI Error:", err);
-    } finally {
-      setLoading(false);
-    }
+    const prompt = `You are a Veterinary Expert for Kashmiri farmers. Help with this livestock issue in Urdu: ${query}`;
+    const res = await askAI(prompt, false);
+    setResponse(res || "Bhai, network ka masla hai. Dobara koshish karein.");
+    setLoading(false);
   };
 
-  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImage(reader.result as string);
-        processImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  const schedule = [
+    { disease: 'FMD (Mun-Khur)', timing: 'March / Sept', status: 'Priority' },
+    { disease: 'HS (Gal-Ghotu)', timing: 'May / June', status: 'Essential' },
+    { disease: 'Anthrax', timing: 'Pre-Monsoon', status: 'Required' }
+  ];
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700 pb-20 no-scrollbar" dir="rtl">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div className="p-4 md:p-10 space-y-10 text-right bg-black min-h-screen text-white pb-32" dir="rtl">
+      
+      {/* Header */}
+      <header className="flex flex-col md:flex-row items-center justify-between gap-6 bg-orange-600/10 p-8 rounded-[3rem] border border-orange-500/20 shadow-2xl">
         <div className="text-right">
-          <h2 className="text-3xl font-bold text-slate-900 font-urdu">مویشی پالن اے آئی (Livestock AI)</h2>
-          <p className="text-slate-500 font-medium">بھیڑ، بکریوں اور گائے کے لیے طبی امداد۔</p>
+          <h1 className="text-4xl font-black font-urdu text-orange-500">لائیو اسٹاک AI</h1>
+          <p className="text-[10px] text-orange-500/40 font-black uppercase tracking-widest mt-2 flex items-center justify-end gap-2">
+             Maveshi Health & Expert Advice
+          </p>
         </div>
-        <div className="flex bg-white p-1 rounded-2xl border border-slate-100 shadow-sm" dir="ltr">
-          {['Sheep', 'Cattle', 'Goat'].map(t => (
-            <button key={t} onClick={() => setAnimal(t)} className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${animal === t ? 'bg-emerald-900 text-white' : 'text-slate-400'}`}>{t}</button>
-          ))}
+        <div className="bg-orange-600 p-4 rounded-3xl text-white shadow-2xl">
+          <Rabbit size={48} />
         </div>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="space-y-6">
-          <div className="relative bg-slate-900 rounded-[3rem] overflow-hidden aspect-square shadow-2xl flex items-center justify-center border-4 border-emerald-900/10">
-            {image ? <img src={image} className="w-full h-full object-cover" /> : (
-              <div className="text-center p-12 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                <Rabbit className="w-16 h-16 text-emerald-400 mx-auto mb-4" />
-                <p className="text-white font-bold">تجزیہ کے لیے تصویر اپ لوڈ کریں</p>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        {/* 1. AI SYMPTOM CHECKER */}
+        <div className="lg:col-span-8 space-y-6">
+          <div className="bg-[#0a0a0a] p-8 rounded-[3.5rem] border border-white/5 space-y-6">
+            <div className="flex items-center gap-4 text-orange-400">
+              <Bot size={28} />
+              <h2 className="text-2xl font-black font-urdu text-white">بیماری کی تشخیص (AI)</h2>
+            </div>
+            
+            <p className="text-slate-400 font-urdu text-lg leading-relaxed">
+              اپنے جانور کی علامات (Symptoms) لکھیں، جیسے "گائے کو بخار ہے" یا "بھیڑ کھانا نہیں کھا رہی"۔
+            </p>
+
+            <div className="relative mt-6">
+              <textarea 
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="یہاں لکھیں..."
+                className="w-full bg-white/5 border border-white/10 p-6 rounded-[2rem] text-white font-urdu text-xl outline-none focus:border-orange-500/50 min-h-[150px] transition-all"
+              />
+              <button 
+                onClick={handleAskAI}
+                disabled={loading}
+                className="absolute left-4 bottom-4 bg-orange-600 text-white px-8 py-3 rounded-2xl font-black hover:bg-orange-700 transition-all flex items-center gap-2"
+              >
+                {loading ? "Checking..." : <><Send size={18}/> پوچھیں</>}
+              </button>
+            </div>
+
+            {response && (
+              <div className="bg-orange-500/5 border border-orange-500/20 p-8 rounded-[2.5rem] mt-6 animate-in fade-in duration-500">
+                <p className="text-orange-500 font-black font-urdu mb-2">ماہر کا مشورہ:</p>
+                <p className="text-xl font-bold font-urdu text-slate-200 leading-relaxed italic">"{response}"</p>
               </div>
             )}
-            {loading && <div className="absolute inset-0 bg-emerald-950/80 backdrop-blur-md flex flex-col items-center justify-center text-white"><Loader2 className="w-12 h-12 animate-spin mb-4 text-emerald-400" /><span className="font-bold">Analyzing Vitals...</span></div>}
           </div>
-          <button onClick={() => fileInputRef.current?.click()} className="w-full bg-emerald-600 text-white py-5 rounded-[2rem] font-bold shadow-xl flex items-center justify-center gap-3"><Camera className="w-6 h-6" /> Scan Now</button>
-          <input type="file" ref={fileInputRef} onChange={handleUpload} className="hidden" accept="image/*" />
         </div>
 
-        <div className="space-y-6">
-          {analysis && (
-            <div className="bg-white p-10 rounded-[3.5rem] border border-slate-100 shadow-2xl space-y-8 animate-in zoom-in-95">
-              <div className="flex justify-between items-start">
-                <div className="text-right">
-                  <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase ${analysis.severity === 'High' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>{analysis.severity} Risk</span>
-                  <h3 className="text-4xl font-bold text-slate-900 mt-2 font-urdu">{analysis.condition}</h3>
-                </div>
-                <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600"><Heart className="w-8 h-8" /></div>
-              </div>
-              <div className="bg-emerald-950 p-8 rounded-[2.5rem] text-white space-y-4">
-                 <h4 className="font-bold flex items-center gap-2 justify-end font-urdu"><Volume2 className="w-5 h-5 text-emerald-400" /> خلاصہ اور مشورہ</h4>
-                 <p className="text-2xl font-medium leading-loose text-right font-urdu" dir="rtl">{analysis.urduSummary}</p>
-              </div>
+        {/* 2. VACCINATION SCHEDULE */}
+        <div className="lg:col-span-4 space-y-6">
+          <div className="bg-[#0a0a0a] p-8 rounded-[3.5rem] border border-white/5">
+            <div className="flex items-center gap-4 text-emerald-500 mb-8">
+              <Syringe size={24} />
+              <h2 className="text-2xl font-black font-urdu text-white">ٹیکہ جات (Vaccines)</h2>
             </div>
-          )}
+            
+            <div className="space-y-4">
+              {schedule.map((item, i) => (
+                <div key={i} className="p-6 bg-white/5 rounded-3xl border border-white/5 hover:bg-white/10 transition-all">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-[9px] font-black text-emerald-500 bg-emerald-500/10 px-3 py-1 rounded-full">{item.status}</span>
+                    <p className="font-black font-urdu text-xl text-white">{item.disease}</p>
+                  </div>
+                  <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">{item.timing}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-8 p-6 bg-emerald-500/10 rounded-3xl border border-emerald-500/20 flex items-center gap-4">
+              <ShieldCheck className="text-emerald-500" />
+              <p className="text-xs font-bold text-emerald-200 uppercase tracking-tighter">Authorized Vaccination Guide</p>
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Safety Note */}
+      <div className="bg-rose-500/10 border border-rose-500/20 p-8 rounded-[3rem] flex items-center gap-6 shadow-2xl">
+         <AlertCircle className="text-rose-500 shrink-0" size={32} />
+         <p className="text-lg font-bold font-urdu text-rose-200/60 leading-relaxed italic">
+           "اہم نوٹس: شدید بیماری کی صورت میں اپنے قریبی سرکاری ویٹرنری ڈاکٹر سے فوری رجوع کریں۔"
+         </p>
+      </div>
+
     </div>
   );
-};
-export default LivestockAI;
+}

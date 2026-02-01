@@ -1,26 +1,24 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
-  Syringe, CheckCircle2, Clock, ShieldCheck, Droplets, Plus, Trash2, 
-  History, Activity, X, MessageCircle, Share2, FileText, Filter, Calendar,
-  AlertTriangle, Sprout, Leaf, Snowflake, Sun
+  Syringe, CheckCircle2, ShieldCheck, Droplets, Plus, Trash2, 
+  FileText, Filter, AlertTriangle, Sprout, Leaf, Snowflake, Sun, Activity, X, Share2
 } from 'lucide-react';
 
+// Official SKUAST-K Protocol 2024
 const SPRAY_PROTOCOL = [
-  { id: 1, title: "Dormant Stage", timing: "Late Feb", chem: "HMO / TSO Oil", desc: "San Jose Scale & Mite Eggs", icon: Snowflake, activeMonth: 1 },
-  { id: 2, title: "Green Tip", timing: "Mid March", chem: "Captan / Dodine", desc: "Primary Scab Infection", icon: Sprout, activeMonth: 2 },
-  { id: 3, title: "Pink Bud", timing: "Early April", chem: "Mancozeb / Zineb", desc: "Pre-Bloom Scab Protection", icon: Leaf, activeMonth: 3 },
-  { id: 4, title: "Petal Fall", timing: "Late April", chem: "Difenoconazole", desc: "Systemic Scab & Mildew", icon: Droplets, activeMonth: 3 },
-  { id: 5, title: "Fruit Set", timing: "Mid May", chem: "Mancozeb + Boron", desc: "Pea Size Stage / Nutrients", icon: Activity, activeMonth: 4 },
-  { id: 6, title: "Fruit Dev I", timing: "June", chem: "Chlorpyrifos + Urea", desc: "Walnut Size / Pests", icon: Sun, activeMonth: 5 },
-  { id: 7, title: "Fruit Dev II", timing: "July", chem: "Propineb / Ziram", desc: "Cover Spray (Scab/Alt)", icon: Sun, activeMonth: 6 },
-  { id: 8, title: "Pre-Harvest", timing: "August", chem: "Carbendazim", desc: "Storage Rot Prevention", icon: CheckCircle2, activeMonth: 7 }
+  { id: 1, title: "Dormant Stage", timing: "Late Feb", chem: "HMO / TSO Oil", desc: "San Jose Scale", icon: Snowflake, activeMonth: 1 },
+  { id: 2, title: "Green Tip", timing: "Mid March", chem: "Captan / Dodine", desc: "Primary Scab", icon: Sprout, activeMonth: 2 },
+  { id: 3, title: "Pink Bud", timing: "Early April", chem: "Mancozeb / Zineb", desc: "Pre-Bloom Scab", icon: Leaf, activeMonth: 3 },
+  { id: 4, title: "Petal Fall", timing: "Late April", chem: "Difenoconazole", desc: "Systemic Scab", icon: Droplets, activeMonth: 3 },
+  { id: 5, title: "Fruit Set", timing: "Mid May", chem: "Mancozeb + Boron", desc: "Pea Size Stage", icon: Activity, activeMonth: 4 },
+  { id: 6, title: "Fruit Dev I", timing: "June", chem: "Chlorpyrifos + Urea", desc: "Pests Control", icon: Sun, activeMonth: 5 },
+  { id: 7, title: "Fruit Dev II", timing: "July", chem: "Propineb / Ziram", desc: "Cover Spray", icon: Sun, activeMonth: 6 },
+  { id: 8, title: "Pre-Harvest", timing: "August", chem: "Carbendazim", desc: "Storage Rot", icon: CheckCircle2, activeMonth: 7 }
 ];
 
 const SprayTracker: React.FC = () => {
   const [logs, setLogs] = useState<any[]>(() => JSON.parse(localStorage.getItem('fck_pesticide_logs') || '[]'));
   const [showAddForm, setShowAddForm] = useState(false);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
   const [currentStageId, setCurrentStageId] = useState(3);
   
   const [newLog, setNewLog] = useState<any>({
@@ -29,7 +27,6 @@ const SprayTracker: React.FC = () => {
     chemicalName: '',
     brandName: '',
     stageId: '',
-    tankSize: '200'
   });
 
   useEffect(() => {
@@ -39,157 +36,145 @@ const SprayTracker: React.FC = () => {
     if (stage) setCurrentStageId(stage.id);
   }, [logs]);
 
-  const filteredLogs = useMemo(() => {
-    return logs.filter(log => {
-      if (!startDate && !endDate) return true;
-      const logDate = new Date(log.date);
-      const start = startDate ? new Date(startDate) : new Date('1970-01-01');
-      const end = endDate ? new Date(endDate) : new Date('2099-12-31');
-      return logDate >= start && logDate <= end;
-    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [logs, startDate, endDate]);
-
   const addLog = () => {
     if (!newLog.chemicalName || !newLog.date) return;
     const log = { id: Date.now().toString(), ...newLog };
-    // FIX: Explicitly type 'prev' to avoid TS7006 error
-    setLogs((prev: any[]) => [log, ...prev]);
+    setLogs((prev) => [log, ...prev]);
     setShowAddForm(false);
-    setNewLog({ date: new Date().toISOString().split('T')[0], type: 'Contact', chemicalName: '', brandName: '', stageId: '', tankSize: '200' });
-  };
-
-  const deleteLog = (id: string) => {
-    // FIX: Explicitly type 'prev' to avoid TS7006 error
-    if (window.confirm("Delete record?")) setLogs((prev: any[]) => prev.filter(l => l.id !== id));
+    setNewLog({ date: new Date().toISOString().split('T')[0], type: 'Contact', chemicalName: '', brandName: '', stageId: '' });
   };
 
   const getStageStatus = (stageId: number) => {
-    const isLogged = logs.some(l => l.stageId === stageId.toString() || l.chemicalName.includes(SPRAY_PROTOCOL[stageId-1].chem.split(' ')[0]));
+    const isLogged = logs.some(l => l.stageId === stageId.toString());
     if (isLogged) return 'completed';
-    if (stageId < currentStageId) return 'missed';
     if (stageId === currentStageId) return 'active';
     return 'pending';
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700 pb-20 no-scrollbar">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="flex items-center gap-5">
-          <div className="w-20 h-20 bg-emerald-900 text-white rounded-[2.5rem] flex items-center justify-center shadow-2xl ring-8 ring-emerald-50"><Syringe className="w-10 h-10" /></div>
-          <div><h2 className="text-4xl font-heading font-bold text-slate-900 tracking-tight">Spray Auditor</h2><p className="text-slate-500 font-medium">Precision logging for valley orchard protocols.</p></div>
+    <div className="p-4 md:p-10 space-y-10 text-right bg-black min-h-screen text-white pb-32" dir="rtl">
+      
+      {/* Header */}
+      <header className="flex flex-col md:flex-row items-center justify-between gap-6 bg-[#0a0a0a] p-8 rounded-[3rem] border border-white/5">
+        <div className="flex items-center gap-6">
+          <div className="w-20 h-20 bg-emerald-600 rounded-[2.5rem] flex items-center justify-center shadow-2xl">
+            <Syringe className="text-white" size={40} />
+          </div>
+          <div className="text-right">
+            <h2 className="text-4xl font-black font-urdu text-emerald-400">اسپرے آڈیٹر</h2>
+            <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px] mt-2 italic">Official Valley Orchard Protocol</p>
+          </div>
         </div>
-        <button onClick={() => setShowAddForm(!showAddForm)} className="bg-emerald-600 text-white px-8 py-4 rounded-2xl font-bold shadow-xl hover:bg-emerald-700 transition-all flex items-center gap-2 group"><Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" /> New Dose</button>
+        <button onClick={() => setShowAddForm(true)} className="bg-emerald-600 text-white px-10 py-5 rounded-2xl font-black text-xs uppercase shadow-2xl hover:bg-emerald-700 transition-all flex items-center gap-3">
+          <Plus size={20}/> نئی انٹری درج کریں
+        </button>
       </header>
 
-      {/* 8-Stage Protocol Visualizer */}
-      <div className="bg-emerald-950 rounded-[3rem] p-8 lg:p-12 text-white shadow-2xl overflow-hidden relative">
-        <div className="relative z-10">
-          <div className="flex items-center justify-between mb-8">
-             <h3 className="text-2xl font-bold flex items-center gap-3"><ShieldCheck className="w-6 h-6 text-emerald-400" /> SKUAST-K Apple Schedule 2024</h3>
-             <span className="text-[10px] font-black uppercase tracking-widest bg-white/10 px-3 py-1 rounded-full border border-white/10">Official Timeline</span>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {SPRAY_PROTOCOL.map((stage) => {
-              const status = getStageStatus(stage.id);
-              return (
-                <div key={stage.id} className={`p-5 rounded-[2rem] border transition-all relative overflow-hidden group ${
-                  status === 'active' ? 'bg-emerald-600 border-emerald-500 shadow-xl scale-105 z-10' : 
-                  status === 'completed' ? 'bg-emerald-900/50 border-emerald-800 opacity-70' : 
-                  status === 'missed' ? 'bg-rose-900/20 border-rose-800/50' :
-                  'bg-white/5 border-white/5'
-                }`}>
-                  <div className="flex justify-between items-start mb-3">
-                    <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Stage {stage.id}</span>
-                    {status === 'completed' && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
-                    {status === 'missed' && <AlertTriangle className="w-4 h-4 text-rose-400" />}
-                    {status === 'active' && <span className="w-2 h-2 bg-white rounded-full animate-pulse" />}
-                  </div>
-                  <div className="space-y-1">
-                    <h4 className="font-bold text-lg leading-tight">{stage.title}</h4>
-                    <p className={`text-xs font-medium ${status === 'active' ? 'text-emerald-100' : 'text-emerald-400'}`}>{stage.timing}</p>
-                  </div>
-                  <div className="mt-4 pt-4 border-t border-white/10">
-                    <p className="text-[10px] font-medium opacity-80 mb-1">{stage.chem}</p>
-                    {status === 'active' && (
-                      <button 
-                        onClick={() => {
-                          setNewLog((prev: any) => ({ ...prev, chemicalName: stage.chem.split(' / ')[0], stageId: stage.id.toString() }));
-                          setShowAddForm(true);
-                        }}
-                        className="w-full mt-2 bg-white text-emerald-800 py-2 rounded-xl text-xs font-bold hover:bg-emerald-50"
-                      >
-                        Log Now
-                      </button>
-                    )}
-                  </div>
+      {/* Protocol Visualizer */}
+      <div className="space-y-4">
+        <p className="text-[10px] font-black uppercase text-emerald-500/40 tracking-[0.4em] px-4">SKUAST-K 2024 شیڈول</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {SPRAY_PROTOCOL.map((stage) => {
+            const status = getStageStatus(stage.id);
+            return (
+              <div key={stage.id} className={`p-6 rounded-[2.5rem] border transition-all ${
+                status === 'active' ? 'bg-emerald-600/20 border-emerald-500 shadow-xl' : 
+                status === 'completed' ? 'bg-white/5 border-emerald-900/50 opacity-50' : 
+                'bg-white/5 border-white/5'
+              }`}>
+                <div className="flex justify-between items-start mb-4">
+                   <stage.icon size={24} className={status === 'active' ? 'text-emerald-400 animate-pulse' : 'text-slate-500'} />
+                   {status === 'completed' && <CheckCircle2 size={16} className="text-emerald-500" />}
                 </div>
-              );
-            })}
-          </div>
+                <h4 className="font-black font-urdu text-xl text-white">{stage.title}</h4>
+                <p className="text-[10px] text-emerald-500/60 font-black mt-1 uppercase">{stage.timing}</p>
+              </div>
+            );
+          })}
         </div>
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-8 space-y-8">
-          {showAddForm && (
-            <div className="bg-white p-10 rounded-[3.5rem] border-2 border-emerald-100 shadow-2xl space-y-6 animate-in slide-in-from-top-4">
-              <div className="flex justify-between items-center"><h3 className="text-2xl font-bold text-slate-900">Add Log</h3><button onClick={() => setShowAddForm(false)} className="p-2"><X className="w-6 h-6 text-slate-400" /></button></div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <input type="date" value={newLog.date} onChange={e => setNewLog((prev: any) => ({...prev, date: e.target.value}))} className="p-4 bg-slate-50 border rounded-2xl font-bold" />
-                <select value={newLog.stageId} onChange={e => setNewLog((prev: any) => ({...prev, stageId: e.target.value}))} className="p-4 bg-slate-50 border rounded-2xl font-bold">
-                  <option value="">Select Protocol Stage (Optional)</option>
-                  {SPRAY_PROTOCOL.map(s => <option key={s.id} value={s.id}>Stage {s.id}: {s.title}</option>)}
-                </select>
-                <input type="text" placeholder="Active Molecule" value={newLog.chemicalName} onChange={e => setNewLog((prev: any) => ({...prev, chemicalName: e.target.value}))} className="p-4 bg-slate-50 border rounded-2xl font-bold" />
-                <input type="text" placeholder="Brand Name" value={newLog.brandName} onChange={e => setNewLog((prev: any) => ({...prev, brandName: e.target.value}))} className="p-4 bg-slate-50 border rounded-2xl font-bold" />
-                <select value={newLog.type} onChange={e => setNewLog((prev: any) => ({...prev, type: e.target.value}))} className="p-4 bg-slate-50 border rounded-2xl font-bold"><option value="Contact">Contact (8d)</option><option value="Systemic">Systemic (10d)</option><option value="Combination">Combination (12d)</option></select>
-              </div>
-              <button onClick={addLog} className="w-full bg-emerald-600 text-white py-5 rounded-[2rem] font-bold shadow-xl hover:bg-emerald-700 transition-all">Commit Entry</button>
+      {/* Add Log Form Overlay */}
+      {showAddForm && (
+        <div className="fixed inset-0 bg-black/90 z-[10000] flex items-center justify-center p-6 backdrop-blur-sm">
+          <div className="bg-[#0a0a0a] p-10 rounded-[4rem] border border-white/10 w-full max-w-2xl space-y-8 shadow-2xl">
+            <div className="flex justify-between items-center border-b border-white/5 pb-6">
+               <h3 className="text-3xl font-black font-urdu text-emerald-400">انٹری شامل کریں</h3>
+               <button onClick={() => setShowAddForm(false)} className="p-3 bg-white/5 rounded-2xl"><X size={24}/></button>
             </div>
-          )}
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+               <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-slate-500 mr-2">تاریخ</label>
+                  <input type="date" value={newLog.date} onChange={e => setNewLog({...newLog, date: e.target.value})} className="w-full bg-white/5 border border-white/10 p-5 rounded-2xl text-white outline-none focus:border-emerald-500 transition-all font-bold" />
+               </div>
+               <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-slate-500 mr-2">پروٹوکول اسٹیج</label>
+                  <select value={newLog.stageId} onChange={e => setNewLog({...newLog, stageId: e.target.value})} className="w-full bg-white/5 border border-white/10 p-5 rounded-2xl text-white outline-none focus:border-emerald-500 transition-all font-bold">
+                    <option value="">دستی انٹری (Manual)</option>
+                    {SPRAY_PROTOCOL.map(s => <option key={s.id} value={s.id}>اسٹیج {s.id}: {s.title}</option>)}
+                  </select>
+               </div>
+               <input placeholder="دوائی کا نام (Active Molecule)" value={newLog.chemicalName} onChange={e => setNewLog({...newLog, chemicalName: e.target.value})} className="w-full bg-white/5 border border-white/10 p-5 rounded-2xl text-white outline-none focus:border-emerald-500 font-urdu text-lg" />
+               <input placeholder="برانڈ کا نام (Brand Name)" value={newLog.brandName} onChange={e => setNewLog({...newLog, brandName: e.target.value})} className="w-full bg-white/5 border border-white/10 p-5 rounded-2xl text-white outline-none focus:border-emerald-500 font-urdu text-lg" />
+            </div>
 
-          <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm flex flex-col md:flex-row items-center gap-6">
-            <div className="flex items-center gap-4 flex-1">
-              <div className="p-3 bg-emerald-50 rounded-2xl text-emerald-600"><Filter className="w-5 h-5" /></div>
-              <div className="flex items-center gap-4">
-                <div className="flex flex-col"><span className="text-[8px] font-black uppercase text-slate-400 tracking-widest ml-1">From</span><input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="bg-slate-50 border p-3 rounded-xl text-xs font-bold" /></div>
-                <div className="flex flex-col"><span className="text-[8px] font-black uppercase text-slate-400 tracking-widest ml-1">To</span><input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="bg-slate-50 border p-3 rounded-xl text-xs font-bold" /></div>
-              </div>
-            </div>
-            <button className="bg-emerald-950 text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-3"><Share2 className="w-5 h-5" /> Export PDF</button>
+            <button onClick={addLog} className="w-full bg-emerald-600 text-white py-6 rounded-[2.5rem] font-black text-xs uppercase shadow-2xl hover:bg-emerald-700 transition-all">کلاؤڈ میں محفوظ کریں</button>
           </div>
+        </div>
+      )}
 
-          <div className="bg-white p-10 rounded-[3.5rem] border border-slate-100 shadow-sm overflow-hidden">
-            <div className="flex items-center justify-between mb-8 border-b pb-6">
-              <div className="flex items-center gap-4"><FileText className="w-8 h-8 text-emerald-600" /><div><h3 className="text-2xl font-bold">Audit History</h3><p className="text-xs text-slate-400">Total {filteredLogs.length} entries matching filters.</p></div></div>
-            </div>
-            <div className="overflow-x-auto"><table className="w-full text-left"><thead><tr className="text-[10px] font-black uppercase text-slate-400 tracking-widest border-b"><th className="pb-4">Applied</th><th className="pb-4">Stage</th><th className="pb-4">Chemical</th><th className="pb-4">Type</th><th className="pb-4 text-right">Delete</th></tr></thead><tbody className="divide-y">
-              {filteredLogs.map(log => {
+      {/* History Table */}
+      <div className="bg-[#0a0a0a] p-10 rounded-[4rem] border border-white/5 shadow-2xl">
+        <h3 className="text-2xl font-black font-urdu text-white mb-8 flex items-center gap-3">
+          <FileText className="text-emerald-500" /> اسپرے کی تاریخ (History)
+        </h3>
+        <div className="overflow-x-auto">
+          <table className="w-full text-right">
+            <thead>
+              <tr className="text-[10px] font-black uppercase text-slate-500 tracking-widest border-b border-white/5">
+                <th className="pb-6">تاریخ</th>
+                <th className="pb-6">اسٹیج</th>
+                <th className="pb-6">دوائی / برانڈ</th>
+                <th className="pb-6 text-left">حذف</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {logs.map(log => {
                 const stage = SPRAY_PROTOCOL.find(s => s.id.toString() === log.stageId);
                 return (
-                  <tr key={log.id} className="group hover:bg-slate-50 transition-all">
-                    <td className="py-6 font-bold text-slate-900">{new Date(log.date).toLocaleDateString('en-GB', {day:'2-digit', month:'short'})}</td>
-                    <td className="py-6"><span className={`text-[9px] font-black uppercase px-2 py-1 rounded-lg ${stage ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}>{stage ? `Stage ${stage.id}` : 'Manual'}</span></td>
-                    <td className="py-6 font-black text-slate-800">{log.chemicalName}<span className="block text-[10px] text-slate-400 font-medium uppercase tracking-widest">{log.brandName}</span></td>
-                    <td className="py-6"><span className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-lg text-[9px] font-black">{log.type}</span></td>
-                    <td className="py-6 text-right"><button onClick={() => deleteLog(log.id)} className="p-3 text-rose-300 hover:text-rose-600 opacity-0 group-hover:opacity-100 transition-all"><Trash2 className="w-5 h-5" /></button></td>
+                  <tr key={log.id} className="group hover:bg-white/5 transition-all">
+                    <td className="py-8 font-bold text-slate-200">{new Date(log.date).toLocaleDateString('ur-PK')}</td>
+                    <td className="py-8">
+                       <span className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase ${stage ? 'bg-emerald-500/10 text-emerald-500' : 'bg-white/5 text-slate-500'}`}>
+                         {stage ? `اسٹیج ${stage.id}` : 'Manual'}
+                       </span>
+                    </td>
+                    <td className="py-8">
+                       <p className="font-bold text-white text-lg">{log.chemicalName}</p>
+                       <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">{log.brandName}</p>
+                    </td>
+                    <td className="py-8 text-left">
+                       <button onClick={() => setLogs(logs.filter(l => l.id !== log.id))} className="p-4 text-rose-500/30 hover:text-rose-500 hover:bg-rose-500/10 rounded-2xl transition-all">
+                         <Trash2 size={20}/>
+                       </button>
+                    </td>
                   </tr>
                 );
               })}
-            </tbody></table></div>
-          </div>
-        </div>
-
-        <div className="lg:col-span-4 space-y-8">
-          <div className="bg-emerald-50 p-10 rounded-[3.5rem] border border-emerald-100 space-y-8">
-             <div className="flex items-center gap-4"><ShieldCheck className="w-10 h-10 text-emerald-600" /><h4 className="font-bold text-emerald-900 text-xl">Compliance</h4></div>
-             <p className="text-sm text-emerald-800 leading-relaxed font-medium">Accurate audit logs are mandatory for export quality certifications. Always record your active ingredient.</p>
-             <div className="pt-8 border-t border-emerald-100 font-black text-[10px] text-emerald-700 uppercase tracking-[0.2em]">SKUAST-K 2024 Verified</div>
-          </div>
+            </tbody>
+          </table>
         </div>
       </div>
+
+      {/* Safety Alert */}
+      <div className="bg-amber-500/10 border border-amber-500/20 p-8 rounded-[3.5rem] flex items-center gap-6 shadow-2xl">
+         <AlertTriangle className="text-amber-500 shrink-0" size={32} />
+         <p className="text-xl font-bold font-urdu text-amber-200/60 leading-relaxed italic">
+           "احتیاط: اسپرے کے دوران ماسک اور چشمہ پہننا نہ بھولیں، اور بچوں کو باغ سے دور رکھیں۔"
+         </p>
+      </div>
+
     </div>
   );
 };
