@@ -1,119 +1,121 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  CloudSun, Sprout, Syringe, Activity, MapPin, Wind, Droplets, 
-  Thermometer, ArrowRight, ShieldCheck, Bell, TrendingUp, Search, 
-  BookOpen, Heart, Quote
+  CloudSun, Quote, BookOpen, BellRing, ArrowRight, 
+  Lock, ShieldCheck, Zap, MapPin, Droplets, Wind
 } from 'lucide-react';
-import { askAI, getUserData } from '../services/puterService';
+import { useNavigate } from 'react-router-dom';
+import { askAI } from '../services/puterService';
 
 const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [weather, setWeather] = useState<any>(null);
   const [dailyInspiration, setDailyInspiration] = useState({ hadith: '', iqbal: '', greeting: '' });
-  const [stats, setStats] = useState({ sprays: 0, alerts: 0 });
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // 1. Satellite Weather Fetch (Srinagar Node)
-        const wRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=34.08&longitude=74.79&current=temperature_2m,relative_humidity_2m,weather_code&timezone=auto`);
+        // 1. Weather Fetch (Srinagar)
+        const wRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=34.08&longitude=74.79&current=temperature_2m,relative_humidity_2m&timezone=auto`);
         const wData = await wRes.json();
-        const currentW = {
-          temp: `${Math.round(wData.current.temperature_2m)}°C`,
-          hum: `${wData.current.relative_humidity_2m}%`,
-          cond: wData.current.weather_code <= 3 ? "Khush-gawar Mausam" : "Badal/Barish"
-        };
-        setWeather(currentW);
+        setWeather({ 
+          temp: `${Math.round(wData.current.temperature_2m)}°C`, 
+          hum: `${wData.current.relative_humidity_2m}%` 
+        });
 
-        // 2. Dynamic AI Content (Hadith, Iqbal & Greeting)
-        // Hum AI ko bol rahe hain ke har din naya aur relevant content de
-        const prompt = `System: You are an Islamic & Literary scholar for FC Kashmir.
-        Task: Provide 3 items in Real Urdu Script (No Roman Urdu):
-        1. A beautiful Morning Greeting for a Kashmiri Farmer.
-        2. A short Hadith-e-Nabvi (SAW) about agriculture or hard work.
-        3. A famous verse (Shaar) by Allama Iqbal about self-respect (Khudi) or nature.
-        JSON format: {"greeting": "...", "hadith": "...", "iqbal": "..."}`;
-        
+        // 2. AI Content via Puter (Greeting, Hadith, Iqbal)
+        const prompt = `Provide 3 items for a Kashmiri farmer in Urdu script: 1. Morning Greeting, 2. Hadith about hard work, 3. Iqbal Shaar about Khudi. Return JSON: {"greeting": "...", "hadith": "...", "iqbal": "..."}`;
         const aiRes = await askAI(prompt, false);
         if (aiRes) {
           const match = aiRes.match(/\{.*\}/s);
           if (match) setDailyInspiration(JSON.parse(match[0]));
         }
 
-        // 3. Stats from Cloud
-        const sprays = await getUserData('fck_sprays');
-        if (sprays) setStats({ sprays: sprays.length, alerts: 0 });
-      } catch (e) { console.error(e); } finally { setLoading(false); }
-    };
+        // 3. English Voice Alert
+        const msg = new SpeechSynthesisUtterance("Attention. Sorry to say that you have missed the spray scheduled.");
+        msg.lang = 'en-US';
+        window.speechSynthesis.speak(msg);
 
+      } catch (e) { console.error(e); }
+    };
     fetchDashboardData();
   }, []);
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-700 pb-20">
+    <div className="flex-1 p-6 md:p-12 space-y-8 text-right overflow-y-auto h-full no-scrollbar bg-black" dir="rtl">
       
-      {/* Header & Weather Section */}
-      <section className="relative overflow-hidden bg-emerald-900 rounded-[3.5rem] p-10 text-white shadow-2xl">
-        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-          <div className="space-y-4">
-            <h1 className="text-3xl font-black text-emerald-400 leading-tight" dir="rtl">
-              {dailyInspiration.greeting || 'صبح بخیر، ایف سی کشمیر پورٹل پر خوش آمدید'}
-            </h1>
-            <div className="flex items-center gap-3 text-emerald-100/60 font-bold uppercase text-[10px]">
-              <MapPin className="w-4 h-4" /> Srinagar Core • {new Date().toLocaleDateString('ur-PK')}
+      {/* 1. CRITICAL ALERT ON TOP */}
+      <div className="bg-rose-500/10 border border-rose-500/20 p-10 rounded-[4rem] flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl animate-in slide-in-from-top-4">
+         <div className="flex items-center gap-8">
+            <div className="w-20 h-20 bg-rose-500/20 rounded-[2.5rem] flex items-center justify-center text-rose-500 shadow-2xl">
+              <BellRing className="animate-pulse" size={40} />
             </div>
-          </div>
+            <div className="text-right">
+               <p className="text-rose-500 font-black font-urdu text-3xl tracking-tight leading-none">توجہ فرمائیں! اسپرے الرٹ</p>
+               <p className="text-[10px] text-rose-200/40 uppercase font-black tracking-[0.3em] mt-2 italic">Critical: Pink Bud Stage Spray Schedule Missed</p>
+            </div>
+         </div>
+         <button 
+           onClick={() => navigate('/farmer-portal')} 
+           className="bg-rose-600 text-white px-12 py-5 rounded-3xl font-black text-xs uppercase shadow-2xl hover:bg-rose-700 transition-all active:scale-95 flex items-center gap-3"
+         >
+           Check Auditor <ArrowRight size={18} />
+         </button>
+      </div>
 
-          <div className="bg-white/10 backdrop-blur-md rounded-3xl p-6 border border-white/10 flex justify-around items-center">
-            <div className="text-center">
-               <p className="text-5xl font-black">{weather?.temp || '--'}</p>
-               <p className="text-[10px] font-bold uppercase mt-2 text-emerald-300">{weather?.cond}</p>
+      {/* 2. TOP GREETING HERO */}
+      <header className="bg-emerald-950/30 p-10 md:p-14 rounded-[4rem] border border-white/5 relative overflow-hidden shadow-2xl">
+        <div className="relative z-10 space-y-6">
+          <h2 className="text-4xl md:text-6xl font-black font-urdu text-emerald-400 tracking-tight leading-tight">
+            {dailyInspiration.greeting || 'السلام علیکم، میرے قابل احترام ساتھیو!'}
+          </h2>
+          <p className="text-xl md:text-2xl font-bold font-urdu text-emerald-100/60 leading-relaxed italic max-w-4xl mr-auto">
+            "{dailyInspiration.iqbal || 'خودی کو کر بلند اتنا کہ ہر تقدیر سے پہلے خدا بندے سے خود پوچھے بتا تیری رضا کیا ہے'}"
+          </p>
+          <div className="flex items-center justify-end gap-2 text-emerald-500/20 text-[10px] uppercase font-black tracking-widest pt-4">
+            <MapPin size={12} /> Srinagar Core Node • {new Date().toLocaleDateString('ur-PK')}
+          </div>
+        </div>
+        <Quote className="absolute -left-10 -top-10 w-64 h-64 text-white/5" />
+      </header>
+
+      {/* 3. ADMIN STATION VIP ACCESS CARD */}
+      <section className="grid grid-cols-1 gap-6" dir="ltr">
+        <div 
+          onClick={() => navigate('/admin')}
+          className="bg-rose-500/5 border-2 border-dashed border-rose-500/20 p-8 rounded-[3.5rem] flex items-center justify-between group cursor-pointer hover:bg-rose-500/10 transition-all"
+        >
+          <div className="flex items-center gap-6">
+            <div className="w-16 h-16 bg-rose-500/20 rounded-3xl flex items-center justify-center text-rose-500 group-hover:scale-110 transition-transform">
+              <Lock size={32} />
             </div>
-            <div className="space-y-2">
-               <div className="flex items-center gap-2 text-sm"><Droplets className="w-4 h-4 text-blue-300" /> {weather?.hum}</div>
-               <div className="flex items-center gap-2 text-sm"><Wind className="w-4 h-4 text-emerald-300" /> 12 km/h</div>
+            <div className="text-left">
+              <h3 className="text-2xl font-black text-rose-500 uppercase tracking-tighter">Admin Command Station</h3>
+              <p className="text-[10px] font-bold text-rose-200/40 uppercase tracking-[0.2em]">Full Station Control & Master Data Management</p>
             </div>
           </div>
+          <ShieldCheck className="text-rose-500/20 group-hover:text-rose-500 transition-colors" size={48} />
         </div>
       </section>
 
-      {/* Hadith & Iqbal Cards (Dill Khush Section) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-10 rounded-[3.5rem] border-t-8 border-emerald-600 shadow-xl relative overflow-hidden group">
-          <Heart className="absolute -right-4 -bottom-4 w-24 h-24 text-emerald-50 opacity-50 group-hover:scale-110 transition-transform" />
-          <h3 className="text-emerald-900 font-black text-xs uppercase mb-6 flex items-center gap-2">
-            <BookOpen className="w-4 h-4" /> حدیثِ نبوی ﷺ
-          </h3>
-          <p className="text-xl md:text-2xl font-bold leading-relaxed text-slate-800 text-right" dir="rtl">
-            {dailyInspiration.hadith || 'جو مسلمان درخت لگائے یا کھیتی کرے اور اس میں سے کوئی پرندہ یا انسان کھائے تو یہ اس کے لیے صدقہ ہے۔'}
-          </p>
-        </div>
-
-        <div className="bg-emerald-950 p-10 rounded-[3.5rem] text-white shadow-xl relative overflow-hidden group">
-          <Quote className="absolute -left-4 -top-4 w-24 h-24 text-white/5 opacity-50" />
-          <h3 className="text-emerald-400 font-black text-xs uppercase mb-6 flex items-center gap-2 justify-end">
-            کلامِ اقبال <Sprout className="w-4 h-4" />
-          </h3>
-          <p className="text-xl md:text-2xl font-bold leading-relaxed text-emerald-50 text-right" dir="rtl">
-            {dailyInspiration.iqbal || 'ذرا نم ہو تو یہ مٹی بڑی زرخیز ہے ساقی'}
-          </p>
-        </div>
-      </div>
-
-      {/* Services Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: 'Spray History', icon: Syringe, val: stats.sprays, color: 'emerald' },
-          { label: 'Market Prices', icon: TrendingUp, val: 'Live', color: 'blue' },
-          { label: 'Soil Health', icon: Activity, val: 'Good', color: 'amber' },
-          { label: 'Expert Help', icon: Search, val: 'AI', color: 'rose' }
-        ].map((item, i) => (
-          <div key={i} className="bg-white p-6 rounded-[2.5rem] border shadow-sm text-center space-y-3 hover:scale-105 transition-transform">
-            <div className={`w-12 h-12 mx-auto bg-${item.color}-50 text-${item.color}-600 rounded-2xl flex items-center justify-center`}><item.icon /></div>
-            <p className="text-[10px] font-black uppercase text-slate-400">{item.label}</p>
-            <p className="text-lg font-black text-slate-800">{item.val}</p>
+      {/* 4. WEATHER & HADITH GRID */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="bg-white/5 p-10 rounded-[3.5rem] border border-white/5 flex flex-col items-center justify-center text-center group hover:bg-white/10 transition-all">
+          <CloudSun size={64} className="text-emerald-500 mb-4 group-hover:scale-110 transition-transform" />
+          <p className="text-7xl font-black tracking-tighter text-white">{weather?.temp || '5°C'}</p>
+          <div className="flex gap-4 mt-4 text-emerald-500/40 font-black text-[10px] uppercase tracking-widest">
+            <span className="flex items-center gap-1 text-blue-400"><Droplets size={12}/> {weather?.hum || '60%'}</span>
+            <span className="flex items-center gap-1 text-emerald-400"><Wind size={12}/> 12 km/h</span>
           </div>
-        ))}
+        </div>
+
+        <div className="bg-white/5 p-10 rounded-[3.5rem] border border-white/5 flex flex-col justify-center text-right space-y-6">
+          <div className="flex items-center justify-end gap-3 text-emerald-500/30 font-black text-[10px] uppercase tracking-widest">
+            فرمانِ رسول ﷺ <BookOpen size={14}/>
+          </div>
+          <p className="text-2xl md:text-3xl font-bold font-urdu leading-relaxed text-slate-200">
+            {dailyInspiration.hadith || 'خَيْرُ النَّاسِ أَنْفَعُهُمْ لِلنَّاسِ'}
+          </p>
+        </div>
       </div>
 
     </div>

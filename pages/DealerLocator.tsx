@@ -1,43 +1,40 @@
 import React, { useState } from 'react';
-import { MapPin, Navigation2, Loader2, AlertCircle, ShieldCheck, Info } from 'lucide-react';
+import { MapPin, Navigation2, Loader2, ShieldCheck } from 'lucide-react';
 import { askAI } from '../services/puterService';
 
 const DealerLocator: React.FC = () => {
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<string | null>(null);
+  const [results, setResults] = useState<any>(null);
 
   const handleLocate = async () => {
     setLoading(true);
     try {
-      // Functional satellite grounded search using Puter AI
-      const prompt = "Find 3 verified agriculture pesticide/fertilizer dealers in Srinagar or nearby Kashmir. List Name, Location, and Phone.";
+      const prompt = `Find 3 verified agriculture dealers in Srinagar. Return JSON: {"dealers": [{"name": "...", "loc": "...", "phone": "..."}]}`;
       const res = await askAI(prompt, false);
-      setResults(res);
-    } catch (err) {
-      setResults("Nearby stores not found. Please check manual directory.");
-    } finally {
-      setLoading(false);
-    }
+      const match = res?.match(/\{.*\}/s);
+      if (match) setResults(JSON.parse(match[0]));
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 pb-20 p-4 text-left">
-      <header className="text-center space-y-4">
-        <div className="w-20 h-20 bg-emerald-100 rounded-[2.5rem] flex items-center justify-center mx-auto text-emerald-600"><MapPin className="w-10 h-10" /></div>
-        <h2 className="text-3xl font-bold">Verified Dealer Locator</h2>
-        <button onClick={handleLocate} disabled={loading} className="bg-emerald-800 text-white px-10 py-5 rounded-[2.5rem] font-bold text-xl flex items-center gap-3 mx-auto">
-          {loading ? <Loader2 className="animate-spin" /> : <Navigation2 />} Locate Nearby Dealers
-        </button>
-      </header>
+    <div className="max-w-4xl mx-auto space-y-8 p-4 text-center">
+      <h2 className="text-3xl font-bold">Verified Dealer Locator</h2>
+      <button onClick={handleLocate} className="bg-emerald-800 text-white px-10 py-5 rounded-[2.5rem] font-bold shadow-xl">
+        {loading ? <Loader2 className="animate-spin" /> : <Navigation2 />} Locate Dealers
+      </button>
+
       {results && (
-        <div className="bg-white p-8 rounded-[3.5rem] border-2 border-emerald-100 shadow-2xl animate-in zoom-in-95">
-          <div className="flex items-center gap-3 mb-6"><ShieldCheck className="text-emerald-600" /><h3 className="text-2xl font-bold">Certified Stores Found</h3></div>
-          <div className="prose text-slate-700 whitespace-pre-wrap font-medium">{results}</div>
-          <div className="mt-8 bg-amber-50 p-6 rounded-[2rem] flex items-start gap-4"><Info className="text-amber-600" /><p className="text-xs text-amber-900">Always ask for GST invoices to ensure genuine quality.</p></div>
+        <div className="grid gap-4 mt-8">
+          {results.dealers.map((d: any, i: number) => (
+            <div key={i} className="bg-white p-6 rounded-[2rem] border shadow-sm flex justify-between items-center text-left">
+              <div><p className="font-bold text-slate-900">{d.name}</p><p className="text-xs text-slate-400">{d.loc}</p></div>
+              <p className="text-emerald-600 font-black">{d.phone}</p>
+            </div>
+          ))}
         </div>
       )}
     </div>
   );
 };
-
 export default DealerLocator;
