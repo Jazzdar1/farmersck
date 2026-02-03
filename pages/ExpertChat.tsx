@@ -1,69 +1,128 @@
-import React, { useState } from 'react';
-import { Send, MessageCircle, Bot, User, Sparkles } from 'lucide-react';
-import { askAI } from '../services/puterService';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Send, ArrowRight, MoreVertical, CheckCheck, Paperclip, Smile } from 'lucide-react';
 
 export default function ExpertChat() {
-  const [query, setQuery] = useState('');
-  const [chat, setChat] = useState<{role: string, text: string}[]>([]);
-  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  // State for messages visible in UI
+  const [messages, setMessages] = useState<any[]>([
+    { id: 1, role: 'assistant', text: 'السلام علیکم! میں حاضر ہوں۔ آپ اپنے باغ کے بارے میں کچھ بھی پوچھ سکتے ہیں۔', time: '21:52' }
+  ]);
+  const [input, setInput] = useState("");
+  const [isThinking, setIsThinking] = useState(false);
+  const lang = localStorage.getItem('fck_lang') || 'ur';
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const puter = (window as any).puter;
 
-  const handleAsk = async () => {
-    if (!query) return;
-    setLoading(true);
-    setChat(prev => [...prev, { role: 'user', text: query }]);
+  // 1. CHAT MEMORY LOGIC: This keeps track of the context
+  const [chatHistory, setChatHistory] = useState<any[]>([
+    { role: 'assistant', content: 'السلام علیکم! میں حاضر ہوں۔ آپ اپنے باغ کے بارے میں کچھ بھی پوچھ سکتے ہیں۔' }
+  ]);
+
+  const scrollToBottom = () => {
+    scrollRef.current?.scrollIntoView({ behavior: 'auto' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isThinking]);
+
+  const handleSend = async () => {
+    if (!input.trim() || isThinking) return;
+
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+    const userMsg = { id: Date.now(), role: 'user', text: input, time };
     
-    // Expert Prompting
-    const fullPrompt = `Kashmiri Farmer Expert AI: ${query}`;
-    const response = await askAI(fullPrompt, false);
+    // Update UI
+    setMessages(prev => [...prev, userMsg]);
     
-    setChat(prev => [...prev, { role: 'bot', text: response || "Bhai, network ka masla hai. Dubara poochein." }]);
-    setQuery('');
-    setLoading(false);
+    // Update Logical History for Gemini
+    const updatedHistory = [...chatHistory, { role: 'user', content: input }];
+    setChatHistory(updatedHistory);
+    
+    const currentInput = input;
+    setInput("");
+    setIsThinking(true);
+
+    try {
+      // 2. SEND FULL HISTORY: Gemini now sees the "Follow-up" context
+      // We take the last 6 messages to keep the response fast but smart
+      const contextPrompt = updatedHistory.slice(-6).map(m => `${m.role}: ${m.content}`).join("\n");
+      
+      const response = await puter.ai.chat(
+        `You are a professional Apple Orchard Expert in Kashmir. 
+         Maintain the conversation flow based on this history:
+         ${contextPrompt}
+         
+         Reply specifically to the last message in ${lang === 'ur' ? 'Urdu' : 'English'}.`
+      );
+      
+      const aiResponseText = response.toString();
+      
+      // Update UI with AI reply
+      setMessages(prev => [...prev, { 
+        id: Date.now() + 1, 
+        role: 'assistant', 
+        text: aiResponseText, 
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) 
+      }]);
+
+      // Update Logical History with AI reply
+      setChatHistory(prev => [...prev, { role: 'assistant', content: aiResponseText }]);
+
+    } catch (err) {
+      setMessages(prev => [...prev, { id: 'err', role: 'assistant', text: 'Network issue. Try again.', time: '!' }]);
+    } finally {
+      setIsThinking(false);
+    }
   };
 
   return (
-    <div className="p-4 md:p-10 bg-black min-h-screen text-right flex flex-col" dir="rtl">
-      <header className="mb-8 flex items-center justify-between bg-emerald-600/10 p-6 rounded-[2.5rem] border border-emerald-500/20">
-         <div className="flex items-center gap-4">
-            <div className="bg-emerald-500 p-3 rounded-2xl text-black"><Bot size={28}/></div>
-            <div>
-               <h1 className="text-2xl font-black font-urdu text-emerald-400 leading-none">زرعی ماہر AI</h1>
-               <p className="text-[9px] text-emerald-500/40 uppercase tracking-[0.2em] mt-1 font-black italic">Powered by FCK Expert Engine</p>
-            </div>
-         </div>
-      </header>
-
-      {/* Chat History */}
-      <div className="flex-1 space-y-6 overflow-y-auto no-scrollbar mb-24 px-2">
-        {chat.length === 0 && (
-          <div className="text-center py-20 opacity-30">
-             <Sparkles size={48} className="mx-auto mb-4 text-emerald-500" />
-             <p className="font-urdu text-xl text-white">کیسے مدد کروں؟ سیب کے باغ یا کھاد کے بارے میں پوچھیں۔</p>
+    <div className="flex flex-col h-[100dvh] w-full bg-[#0b141a] text-[#e9edef] overflow-hidden">
+      {/* HEADER */}
+      <div className="h-[55px] bg-[#202c33] px-3 flex justify-between items-center shrink-0 border-b border-white/5 z-10">
+        <div className="flex items-center gap-2">
+          <button onClick={() => navigate('/my-portal')} className="p-2 -mr-2"><ArrowRight className={lang === 'en' ? 'rotate-180' : ''} size={20} /></button>
+          <div className="w-8 h-8 rounded-full bg-[#00a884] flex items-center justify-center text-black font-black text-[10px] ml-2">AI</div>
+          <div className="flex flex-col px-1">
+            <h2 className="text-[14px] font-bold leading-none">{lang === 'ur' ? 'زرعی ماہر' : 'Agri Expert'}</h2>
+            <p className="text-[9px] text-emerald-500 font-bold uppercase mt-1 tracking-widest">online</p>
           </div>
-        )}
-        {chat.map((msg, i) => (
-          <div key={i} className={`flex gap-4 ${msg.role === 'user' ? 'justify-start flex-row-reverse' : 'justify-start'}`}>
-            <div className={`p-5 rounded-[2rem] max-w-[85%] text-lg font-urdu leading-relaxed ${msg.role === 'user' ? 'bg-emerald-600 text-white rounded-tr-none' : 'bg-white/5 text-slate-200 border border-white/5 rounded-tl-none'}`}>
-              {msg.text}
+        </div>
+        <MoreVertical size={18} className="text-[#aebac1] opacity-60" />
+      </div>
+
+      {/* CHAT AREA */}
+      <div className="flex-1 overflow-y-auto p-3 space-y-2 bg-[#0b141a] relative no-scrollbar">
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png")', backgroundSize: '300px' }}></div>
+        
+        {messages.map((m) => (
+          <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div className={`relative max-w-[85%] px-3 py-1.5 rounded-lg text-[14px] shadow-sm ${m.role === 'user' ? 'bg-[#005c4b] rounded-tr-none' : 'bg-[#202c33] rounded-tl-none'}`}>
+              <p className={`font-urdu leading-relaxed pb-3 ${lang === 'ur' ? 'text-right' : 'text-left'}`}>{m.text}</p>
+              <div className="absolute bottom-1 right-2 flex items-center gap-1">
+                <span className="text-[8px] text-white/30">{m.time}</span>
+                {m.role === 'user' && <CheckCheck size={11} className="text-[#53bdeb]" />}
+              </div>
             </div>
           </div>
         ))}
+        {isThinking && <div className="flex justify-start"><div className="bg-[#202c33] px-3 py-1.5 rounded-lg text-[9px] text-emerald-500 animate-pulse">typing...</div></div>}
+        <div ref={scrollRef} className="h-4" />
       </div>
 
-      {/* Input Box */}
-      <div className="fixed bottom-6 inset-x-4 md:inset-x-20 bg-[#0a0a0a] p-4 rounded-[3rem] border border-white/10 flex items-center gap-4 shadow-2xl">
-        <input 
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="اپنا سوال یہاں لکھیں..."
-          className="bg-transparent flex-1 text-white font-urdu text-xl outline-none px-4"
-        />
-        <button 
-          onClick={handleAsk}
-          className="bg-emerald-600 p-4 rounded-full text-white hover:bg-emerald-500 transition-all active:scale-90"
-        >
-          {loading ? <div className="animate-spin border-2 border-white/30 border-t-white rounded-full w-6 h-6"></div> : <Send size={24} />}
-        </button>
+      {/* INPUT AREA */}
+      <div className="bg-[#202c33] p-2 flex items-center gap-2 shrink-0 pb-6 border-t border-white/5">
+        <div className="flex-1 bg-[#2a3942] rounded-2xl px-4 py-2">
+          <input 
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+            placeholder={lang === 'ur' ? 'پیغام' : 'Message'}
+            className="w-full bg-transparent outline-none text-[16px] font-urdu text-white"
+          />
+        </div>
+        <button onClick={handleSend} className="bg-[#00a884] w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg shrink-0 active:scale-90"><Send size={20} /></button>
       </div>
     </div>
   );

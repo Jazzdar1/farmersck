@@ -1,9 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Lock, Plus, Trash2, Megaphone, Store, 
-  MessageSquare, LogOut, Wifi, Database, PlusCircle
-} from 'lucide-react';
-import { saveUserData, getUserData } from '../services/puterService';
+import { Lock, Plus, Trash2, Megaphone, Store, LogOut, Wifi, Database, PlusCircle, Syringe, Warehouse, GraduationCap, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 
 const ADMIN_GMAIL = "darajazb@gmail.com".toLowerCase();
 
@@ -11,124 +7,103 @@ export default function Admin() {
   const [isAuth, setIsAuth] = useState(false);
   const [activeTab, setActiveTab] = useState('news'); 
   const [data, setData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
   const puter = (window as any).puter;
 
-  // 1. Authenticated Data Loading
+  const keyMap: any = {
+    news: 'fck_news_db',
+    mandi: 'fck_mandi_db',
+    spray: 'fck_spray_db', // Shares data with Farmer Portal Schedule
+    knowledge: 'fck_knowledge_db'
+  };
+
   const loadData = async (tab: string) => {
-    setLoading(true);
-    const key = tab === 'news' ? 'fck_news_db' : tab === 'mandi' ? 'fck_mandi_db' : 'fck_expert_queries';
-    const res = await puter.kv.get(key);
+    if (!puter) return;
+    const res = await puter.kv.get(keyMap[tab]);
     setData(JSON.parse(res || "[]"));
-    setLoading(false);
   };
 
-  // 2. Fixed Admin Login Logic
   const handleLogin = async () => {
-    try {
-      const user = await puter.auth.signIn();
-      const email = (user.email || user.userName || "").toLowerCase();
-      if (email === ADMIN_GMAIL || email === "") {
-        setIsAuth(true);
-        loadData('news');
-      } else {
-        alert(`Access Denied: ${email} is not the admin.`);
-      }
-    } catch (err) {
-      alert("Please allow popups for login.");
-    }
+    const user = await puter.auth.signIn();
+    const email = (user.email || "").toLowerCase();
+    if (email === ADMIN_GMAIL || email === "") { setIsAuth(true); loadData('news'); }
   };
 
-  // 3. Add Entry Function
   const handleAdd = async () => {
-    const msg = prompt(`Enter ${activeTab} content:`);
-    if (!msg) return;
+    let content = prompt(`Enter ${activeTab} Task/Title:`);
+    if (!content) return;
+
+    let status = "ontime";
+    if (activeTab === 'spray' || activeTab === 'mandi') {
+      status = prompt("Enter Status (ontime / delayed / missed):")?.toLowerCase() || "ontime";
+    }
+
+    const newItem = { 
+      id: Date.now().toString(), 
+      content, 
+      status, // CRITICAL: This drives the Portal colors
+      timestamp: new Date().toLocaleString() 
+    };
     
-    const key = activeTab === 'news' ? 'fck_news_db' : activeTab === 'mandi' ? 'fck_mandi_db' : 'fck_expert_queries';
-    const newItem = { id: Date.now().toString(), content: msg, timestamp: new Date().toLocaleString() };
-    const updated = [newItem, ...data];
-    
-    await puter.kv.set(key, JSON.stringify(updated));
+    const res = await puter.kv.get(keyMap[activeTab]);
+    const updated = [newItem, ...JSON.parse(res || "[]")];
+    await puter.kv.set(keyMap[activeTab], JSON.stringify(updated));
     setData(updated);
   };
 
   useEffect(() => { if (isAuth) loadData(activeTab); }, [activeTab, isAuth]);
 
-  // Login Screen
-  if (!isAuth) {
-    return (
-      <div className="h-screen bg-black flex flex-col items-center justify-center p-6 text-center">
-        <div className="bg-[#0a0a0a] p-12 rounded-[3.5rem] border border-white/5 space-y-8 shadow-2xl w-full max-w-sm">
-          <div className="w-20 h-20 bg-emerald-500/10 rounded-[2rem] flex items-center justify-center mx-auto border border-emerald-500/20">
-            <Lock className="text-emerald-500" size={32} />
-          </div>
-          <h2 className="text-2xl font-black text-white uppercase tracking-tighter">Command Station</h2>
-          <button onClick={handleLogin} className="w-full bg-emerald-600 text-white py-5 rounded-2xl font-bold hover:bg-emerald-700 transition-all">
-            Unlock Panel
-          </button>
-        </div>
-      </div>
-    );
-  }
+  if (!isAuth) return (
+    <div className="h-screen bg-black flex items-center justify-center">
+      <button onClick={handleLogin} className="bg-emerald-600 p-8 rounded-3xl text-white font-black shadow-2xl">UNLOCK ADMIN</button>
+    </div>
+  );
 
-  // Actual Admin Panel UI (Now properly separated)
   return (
-    <div className="p-6 lg:p-12 text-white text-right h-screen overflow-y-auto no-scrollbar bg-black" dir="rtl">
-      
-      {/* Header with Navigation */}
-      <header className="bg-[#0a0a0a] p-8 rounded-[3rem] border border-white/5 mb-8 flex flex-col md:flex-row justify-between items-center gap-6 shadow-2xl">
-        <div className="text-right">
-          <h1 className="text-4xl font-black font-urdu text-emerald-400">اسٹیشن کنٹرول</h1>
-          <p className="flex items-center justify-end gap-2 text-[10px] text-emerald-500/40 font-black uppercase mt-2 tracking-widest">
-            <Wifi size={12} className="animate-pulse"/> Authorized Admin Mode
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-3 justify-end">
-          {[
-            { id: 'news', label: 'خبریں', icon: Megaphone },
-            { id: 'mandi', label: 'منڈی', icon: Store },
-            { id: 'queries', label: 'سوالات', icon: MessageSquare }
-          ].map(tab => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all ${activeTab === tab.id ? 'bg-emerald-600 text-white' : 'bg-white/5 text-slate-500'}`}>
-              <tab.icon size={16}/> {tab.label}
-            </button>
-          ))}
-          <button onClick={() => { puter.auth.signOut(); setIsAuth(false); }} className="p-3 bg-rose-500/10 text-rose-500 rounded-xl"><LogOut size={20}/></button>
-        </div>
+    <div className="p-6 lg:p-12 text-white text-right min-h-screen bg-black" dir="rtl">
+      <header className="bg-[#0a0a0a] p-6 rounded-[2rem] border border-white/5 mb-8 flex flex-wrap justify-center gap-2 shadow-2xl">
+        {Object.keys(keyMap).map(tab => (
+          <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-emerald-600' : 'bg-white/5 text-slate-500'}`}>{tab}</button>
+        ))}
+        <button onClick={() => setIsAuth(false)} className="p-2 bg-rose-600 rounded-lg ml-4"><LogOut size={16}/></button>
       </header>
 
-      {/* Quick Add Button */}
-      <button onClick={handleAdd} className="w-full mb-8 bg-emerald-600/5 border-2 border-dashed border-emerald-500/20 p-8 rounded-[2.5rem] flex items-center justify-center gap-4 text-emerald-500 hover:bg-emerald-600/10 transition-all">
-        <PlusCircle size={28} />
-        <span className="font-black font-urdu text-xl uppercase">نئی انٹری شامل کریں</span>
+      <button onClick={handleAdd} className="w-full mb-8 bg-emerald-600/10 border-2 border-dashed border-emerald-500/30 p-10 rounded-[2rem] flex flex-col items-center text-emerald-500 hover:bg-emerald-600/20 transition-all">
+        <PlusCircle size={32} />
+        <span className="font-black font-urdu text-xl mt-2">نئی انٹری شامل کریں ({activeTab})</span>
       </button>
 
-      {/* Data List */}
-      <div className="space-y-4">
-        {loading ? (
-          <div className="text-center py-20 text-emerald-500 animate-pulse font-bold">Syncing Data...</div>
-        ) : data.length === 0 ? (
-          <div className="text-center py-20 opacity-20 border-2 border-dashed border-white/5 rounded-[3rem]">
-            <Database size={48} className="mx-auto mb-4"/>
-            <p className="font-black text-xs uppercase tracking-widest">Cloud Empty</p>
-          </div>
-        ) : (
-          data.map(item => (
-            <div key={item.id} className="p-6 bg-[#0a0a0a] rounded-[2.5rem] border border-white/5 flex justify-between items-center group hover:bg-white/5">
-              <div className="text-right">
-                <p className="text-xl font-bold font-urdu text-slate-200">{item.content}</p>
-                <p className="text-[9px] text-slate-600 font-black uppercase mt-2 italic">{item.timestamp}</p>
+      <div className="space-y-4 pb-20">
+        {data.map(item => (
+          <div key={item.id} className="p-6 bg-[#0a0a0a] rounded-2xl border border-white/5 flex justify-between items-center group">
+            <div className="text-right">
+              <div className="flex items-center gap-2 flex-row-reverse mb-1">
+                <p className="text-xl font-bold font-urdu">{item.content}</p>
+                <StatusBadge status={item.status} />
               </div>
-              <button onClick={async () => {
-                 const key = activeTab === 'news' ? 'fck_news_db' : activeTab === 'mandi' ? 'fck_mandi_db' : 'fck_expert_queries';
-                 const up = data.filter(i => i.id !== item.id);
-                 await puter.kv.set(key, JSON.stringify(up));
-                 setData(up);
-              }} className="p-3 text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all"><Trash2 size={20}/></button>
+              <p className="text-[9px] text-slate-600 italic">{item.timestamp}</p>
             </div>
-          ))
-        )}
+            <button onClick={async () => {
+               const up = data.filter(i => i.id !== item.id);
+               await puter.kv.set(keyMap[activeTab], JSON.stringify(up));
+               setData(up);
+            }} className="text-rose-500 hover:bg-rose-500/10 p-3 rounded-xl transition-all"><Trash2 size={20}/></button>
+          </div>
+        ))}
       </div>
     </div>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const cfg: any = {
+    ontime: { color: 'bg-emerald-500', icon: CheckCircle, label: 'وقت پر' },
+    delayed: { color: 'bg-amber-500', icon: Clock, label: 'تاخیر' },
+    missed: { color: 'bg-rose-500', icon: AlertCircle, label: 'چھوٹ گیا' }
+  };
+  const s = cfg[status] || cfg.ontime;
+  return (
+    <span className={`${s.color} text-black text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1 flex-row-reverse`}>
+      <s.icon size={10} /> {s.label}
+    </span>
   );
 }

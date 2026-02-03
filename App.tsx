@@ -31,7 +31,7 @@ import FarmerPortal from './pages/FarmerPortal';
 import CommunityForum from './pages/CommunityForum';
 import LivestockAI from './pages/LivestockAI';
 import SprayTracker from './pages/SprayTracker';
-import Admin from './pages/Admin'; 
+import Admin from './pages/Admin';
 
 import Footer from './components/Footer';
 
@@ -56,49 +56,51 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white flex flex-col lg:flex-row">
-      {/* SIDEBAR WITH ALL PAGES RESTORED */}
+      {/* SIDEBAR WITH ALL 16+ PAGES RESTORED */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-emerald-950 border-r border-white/10 transition-transform lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'} overflow-y-auto no-scrollbar shadow-2xl`}>
         <div className="p-6 flex flex-col min-h-full">
-          {/* REVOLVING LOGO */}
+          
+          {/* 3D REVOLVING LOGO */}
           <div className="flex items-center gap-4 mb-10 shrink-0">
-            <div className="animate-revolve w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center font-black text-black text-xl shadow-lg">FC</div>
+            <div className="animate-revolve w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center font-black text-black text-xl shadow-lg shadow-emerald-500/20">FC</div>
             <h1 className="font-black text-xl tracking-tighter uppercase text-white">FC KASHMIR</h1>
           </div>
 
           <nav className="flex-1 space-y-6 pb-10">
+            {/* MAIN HUB */}
             <NavGroup title="Main Hub | مین">
               <NavLink to="/" icon={LayoutDashboard} label="Dashboard | ڈیش بورڈ" active={location.pathname === '/'} onClick={() => setIsOpen(false)} />
               <NavLink to="/my-portal" icon={User} label={userName ? `Verified: ${userName}` : "Farmer Portal | کسان پورٹل"} active={location.pathname === '/my-portal'} onClick={() => setIsOpen(false)} />
-              <NavLink to="/expert" icon={MessageCircle} label="Ask Expert AI | ماہر" active={location.pathname === '/expert'} onClick={() => setIsOpen(false)} />
               <NavLink to="/admin" icon={Settings} label="Admin Station | اسٹیشن" active={location.pathname === '/admin'} onClick={() => setIsOpen(false)} />
+              <NavLink to="/expert" icon={MessageCircle} label="Ask Expert AI | ماہر" active={location.pathname === '/expert'} onClick={() => setIsOpen(false)} />
             </NavGroup>
 
+            {/* REAL-TIME */}
             <NavGroup title="Real-time | تازہ ترین">
               <NavLink to="/weather" icon={CloudSun} label="Weather | موسم" active={location.pathname === '/weather'} onClick={() => setIsOpen(false)} />
               <NavLink to="/market" icon={BarChart3} label="Mandi | منڈی" active={location.pathname === '/market'} onClick={() => setIsOpen(false)} />
               <NavLink to="/mandi-stats" icon={TrendingUp} label="Price Stats | تجزیہ" active={location.pathname === '/mandi-stats'} onClick={() => setIsOpen(false)} />
             </NavGroup>
 
-            <NavGroup title="Orchard Tools | باغات کے اوزار">
+            {/* ORCHARD TOOLS */}
+            <NavGroup title="Orchard Tools | باغات">
               <NavLink to="/fck-scanner" icon={ScanEye} label="AI Scanner | اسکینر" active={location.pathname === '/fck-scanner'} onClick={() => setIsOpen(false)} />
               <NavLink to="/spray-track" icon={Syringe} label="Spray Audit | اسپرے" active={location.pathname === '/spray-track'} onClick={() => setIsOpen(false)} />
               <NavLink to="/soil" icon={Microscope} label="Soil Health | مٹی" active={location.pathname === '/soil'} onClick={() => setIsOpen(false)} />
               <NavLink to="/calendar" icon={Calendar} label="Crop Calendar | کیلنڈر" active={location.pathname === '/calendar'} onClick={() => setIsOpen(false)} />
             </NavGroup>
 
-            <NavGroup title="Analysis & Finance | تجزیہ و مالیات">
+            {/* FINANCE & LOGISTICS */}
+            <NavGroup title="Resources | وسائل">
               <NavLink to="/profit-calc" icon={Calculator} label="Profit Calc | منافع" active={location.pathname === '/profit-calc'} onClick={() => setIsOpen(false)} />
-              <NavLink to="/dosage" icon={FlaskConical} label="Dosage Calc | خوراک" active={location.pathname === '/dosage'} onClick={() => setIsOpen(false)} />
               <NavLink to="/subsidies" icon={Landmark} label="Subsidies | سبسڈی" active={location.pathname === '/subsidies'} onClick={() => setIsOpen(false)} />
-            </NavGroup>
-
-            <NavGroup title="Logistics | رسد">
-              <NavLink to="/dealers" icon={MapPinned} label="Dealers | ڈیلرز" active={location.pathname === '/dealers'} onClick={() => setIsOpen(false)} />
               <NavLink to="/ca-storage" icon={Warehouse} label="CA Storage | اسٹوریج" active={location.pathname === '/ca-storage'} onClick={() => setIsOpen(false)} />
+              <NavLink to="/dealers" icon={MapPinned} label="Dealers | ڈیلرز" active={location.pathname === '/dealers'} onClick={() => setIsOpen(false)} />
               <NavLink to="/livestock" icon={Rabbit} label="Livestock AI | مویشی" active={location.pathname === '/livestock'} onClick={() => setIsOpen(false)} />
             </NavGroup>
 
-            <NavGroup title="Resources | وسائل">
+            {/* LEGAL & COMMUNITY */}
+            <NavGroup title="Community | کمیونٹی">
               <NavLink to="/forum" icon={Users} label="Forum | فورم" active={location.pathname === '/forum'} onClick={() => setIsOpen(false)} />
               <NavLink to="/knowledge" icon={GraduationCap} label="Knowledge | علم" active={location.pathname === '/knowledge'} onClick={() => setIsOpen(false)} />
               <NavLink to="/privacy" icon={ShieldCheck} label="Privacy | رازداری" active={location.pathname === '/privacy'} onClick={() => setIsOpen(false)} />
