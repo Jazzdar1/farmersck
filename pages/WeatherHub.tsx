@@ -1,157 +1,188 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Cloud, Wind, Droplets, Loader2, Thermometer, CloudSun, Sprout, ShieldCheck, 
-  AlertTriangle, Calendar, Navigation, MapPin, Sun, Snowflake, CloudRain, Sunrise, Sunset
+  CloudSun, Wind, Droplets, Thermometer, MapPin, 
+  ChevronDown, X, Sun, CloudRain, Snowflake, Cloud, Volume2, Zap 
 } from 'lucide-react';
-import { askAI } from '../services/puterService';
 
-// J&K Districts with exact coordinates for 100% accuracy
-const districtCoords: Record<string, {lat: number, lon: number}> = {
-  "Anantnag": {lat: 33.7311, lon: 75.1487}, "Bandipora": {lat: 34.4224, lon: 74.6391},
-  "Baramulla": {lat: 34.2021, lon: 74.3436}, "Budgam": {lat: 33.9975, lon: 74.7818},
-  "Doda": {lat: 33.1447, lon: 75.5467}, "Ganderbal": {lat: 34.2268, lon: 74.7735},
-  "Jammu": {lat: 32.7266, lon: 74.8570}, "Kathua": {lat: 32.3811, lon: 75.5192},
-  "Kishtwar": {lat: 33.3106, lon: 75.7661}, "Kulgam": {lat: 33.6403, lon: 75.0169},
-  "Kupwara": {lat: 34.5262, lon: 74.2546}, "Poonch": {lat: 33.7680, lon: 74.0910},
-  "Pulwama": {lat: 33.8712, lon: 74.8947}, "Rajouri": {lat: 33.3813, lon: 74.3034},
-  "Ramban": {lat: 33.2442, lon: 75.1895}, "Reasi": {lat: 33.0850, lon: 74.8290},
-  "Samba": {lat: 32.5619, lon: 75.1205}, "Shopian": {lat: 33.7195, lon: 74.8314},
-  "Srinagar": {lat: 34.0837, lon: 74.7973}, "Udhampur": {lat: 32.9234, lon: 75.1325}
-};
-
-const WeatherHub: React.FC = () => {
-  const [selectedDistrict, setSelectedDistrict] = useState('Srinagar');
+export default function WeatherHub() {
+  const [selectedDistrict, setSelectedDistrict] = useState('Kulgam');
   const [weather, setWeather] = useState<any>(null);
-  const [forecast, setForecast] = useState<any[]>([]);
-  const [aiAdvice, setAiAdvice] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [activeDay, setActiveDay] = useState<any>(null);
+  const [alert, setAlert] = useState<{ eng: string, urdu: string, type: 'frost' | 'disease' | 'none' }>({ 
+    eng: '', urdu: '', type: 'none' 
+  });
 
-  const fetchWeatherData = async (dist: string) => {
-    setLoading(true);
-    try {
-      const { lat, lon } = districtCoords[dist];
-      const response = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset&timezone=auto`
-      );
-      const data = await response.json();
-      
-      const currentStats = {
-        temp: `${Math.round(data.current.temperature_2m)}°C`,
-        hum: `${data.current.relative_humidity_2m}%`,
-        wind: `${data.current.wind_speed_10m} km/h`,
-        cond: getCondition(data.current.weather_code),
-        sunrise: new Date(data.daily.sunrise[0]).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        sunset: new Date(data.daily.sunset[0]).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-      setWeather(currentStats);
-
-      const daily = data.daily.time.slice(1, 5).map((time: string, i: number) => ({
-        date: new Date(time).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric' }),
-        max: `${Math.round(data.daily.temperature_2m_max[i+1])}°C`,
-        min: `${Math.round(data.daily.temperature_2m_min[i+1])}°C`,
-        cond: getCondition(data.daily.weather_code[i+1])
-      }));
-      setForecast(daily);
-
-      // Request for Real Urdu Advice
-      const prompt = `Weather in ${dist} is ${currentStats.temp}, ${currentStats.cond}. Provide 1 line of urgent farming advice for apple/saffron protection in Real Urdu (Urdu Script), English, and Hindi. No conversational text.`;
-      const advice = await askAI(prompt, false);
-      setAiAdvice(advice || "اپنے باغات کا خیال رکھیں۔");
-
-    } catch (e) { console.error("Fetch Error:", e); } finally { setLoading(false); }
+  const districtCoords: Record<string, { lat: number, lon: number }> = {
+    "Anantnag": { lat: 33.73, lon: 75.15 }, "Bandipora": { lat: 34.42, lon: 74.65 },
+    "Baramulla": { lat: 34.20, lon: 74.34 }, "Budgam": { lat: 34.02, lon: 74.72 },
+    "Doda": { lat: 33.13, lon: 75.57 }, "Ganderbal": { lat: 34.23, lon: 74.77 },
+    "Jammu": { lat: 32.73, lon: 74.86 }, "Kathua": { lat: 32.38, lon: 75.52 },
+    "Kishtwar": { lat: 33.31, lon: 75.77 }, "Kulgam": { lat: 33.65, lon: 75.02 },
+    "Kupwara": { lat: 34.53, lon: 74.25 }, "Poonch": { lat: 33.77, lon: 74.10 },
+    "Pulwama": { lat: 33.88, lon: 74.92 }, "Rajouri": { lat: 33.38, lon: 74.30 },
+    "Ramban": { lat: 33.25, lon: 75.25 }, "Reasi": { lat: 33.08, lon: 74.83 },
+    "Samba": { lat: 32.56, lon: 75.12 }, "Shopian": { lat: 33.72, lon: 74.83 },
+    "Srinagar": { lat: 34.08, lon: 74.80 }, "Udhampur": { lat: 32.92, lon: 75.13 }
   };
 
-  const getCondition = (code: number) => {
-    if (code === 0) return "Clear Sky";
-    if (code <= 3) return "Partly Cloudy";
-    if (code >= 71 && code <= 77) return "Snowfall";
-    if (code >= 51) return "Rainy";
-    return "Overcast";
+  const getWeatherTheme = (code: number) => {
+    if (code === 0) return { urdu: "آسمان صاف ہے", eng: "It is Sunny", bg: "from-blue-400 to-blue-600", icon: Sun, status: 'clear' };
+    if (code <= 3) return { urdu: "آسمان ابر آلود ہے", eng: "It is Cloudy", bg: "from-slate-400 to-slate-600", icon: CloudSun, status: 'clouds' };
+    if (code >= 51 && code <= 67) return { urdu: "بارش ہو رہی ہے", eng: "It is Raining", bg: "from-blue-800 to-slate-900", icon: CloudRain, status: 'rain' };
+    if (code >= 71 && code <= 77) return { urdu: "برف باری ہو رہی ہے", eng: "It is Snowing", bg: "from-blue-100 to-blue-300 text-slate-800", icon: Snowflake, status: 'snow' };
+    return { urdu: "موسم ابر آلود ہے", eng: "The weather is cloudy", bg: "from-gray-600 to-gray-800", icon: Cloud, status: 'clouds' };
   };
 
-  useEffect(() => { fetchWeatherData(selectedDistrict); }, [selectedDistrict]);
+  const speakWeather = (temp: number, engText: string, urduText: string) => {
+    const synth = window.speechSynthesis;
+    const roundedTemp = Math.round(temp);
+    const engSpeech = `It is ${roundedTemp} degrees Celsius. ${engText}.`;
+    const urduSpeech = `درجہ حرارت ${roundedTemp} ڈگری سینٹی گریڈ ہے۔ ${urduText}۔`;
+    
+    const engUtterance = new SpeechSynthesisUtterance(engSpeech);
+    engUtterance.lang = 'en-US';
+    engUtterance.rate = 0.9;
+    
+    const urduUtterance = new SpeechSynthesisUtterance(urduSpeech);
+    urduUtterance.lang = 'hi-IN'; // Compatible voice for Urdu
+    urduUtterance.rate = 0.8;
+
+    synth.cancel(); 
+    synth.speak(engUtterance);
+    engUtterance.onend = () => {
+      setTimeout(() => synth.speak(urduUtterance), 500);
+    };
+  };
+
+  const generateAlerts = (temp: number, humidity: number) => {
+    if (temp <= 2) return { eng: "Warning: Frost risk detected.", urdu: "انتباہ: کہرے کا خطرہ۔", type: 'frost' as const };
+    if (humidity > 80 && temp > 10 && temp < 20) return { eng: "High Scab disease risk.", urdu: "بیماری کا زیادہ خطرہ۔", type: 'disease' as const };
+    return { eng: '', urdu: '', type: 'none' as const };
+  };
+
+  useEffect(() => {
+    const fetchWeather = async () => {
+      setLoading(true);
+      const { lat, lon } = districtCoords[selectedDistrict];
+      try {
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,apparent_temperature,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto`);
+        const data = await res.json();
+        setWeather(data);
+        
+        const currentTemp = data.current.temperature_2m;
+        const currentHum = data.current.relative_humidity_2m;
+        const theme = getWeatherTheme(data.current.weather_code);
+        const newAlert = generateAlerts(currentTemp, currentHum);
+        setAlert(newAlert);
+
+        let fEng = `It is ${Math.round(currentTemp)} degrees. ${theme.eng}.`;
+        let fUrdu = `درجہ حرارت ${Math.round(currentTemp)} ڈگری ہے۔ ${theme.urdu}۔`;
+        if (newAlert.type !== 'none') { fEng += ` ${newAlert.eng}`; fUrdu += ` ${newAlert.urdu}`; }
+        
+        speakWeather(currentTemp, fEng, fUrdu);
+      } catch (error) { console.error("Weather error", error); }
+      setLoading(false);
+    };
+    fetchWeather();
+  }, [selectedDistrict]);
+
+  if (loading) return <div className="p-10 text-emerald-500 font-black animate-pulse text-center font-urdu">لوڈ ہو رہا ہے...</div>;
+
+  const currentTemp = weather?.current?.temperature_2m;
+  const theme = getWeatherTheme(weather?.current?.weather_code);
+  const MainIcon = theme.icon;
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 pb-32 p-4 text-left">
-      {/* 20 Districts Selector */}
-      <div className="bg-emerald-900 rounded-[3.5rem] p-8 text-white shadow-2xl relative overflow-hidden">
-        <h2 className="text-3xl font-black mb-6 flex items-center gap-4"><MapPin className="text-emerald-400" /> J&K Weather Hub</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-2 max-h-40 overflow-y-auto no-scrollbar p-2">
-          {Object.keys(districtCoords).map(d => (
-            <button key={d} onClick={() => setSelectedDistrict(d)} className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${selectedDistrict === d ? 'bg-white text-emerald-900 shadow-xl' : 'bg-white/10 hover:bg-white/20'}`}>{d}</button>
-          ))}
+    <div className="space-y-6 pb-24 transition-all duration-700">
+      
+      {/* 1. DISTRICT SELECTOR */}
+      <div className="relative">
+        <label className="text-[10px] font-black uppercase text-emerald-500/50 tracking-widest px-2 mb-2 block">JK District Node</label>
+        <div className="relative">
+          <select 
+            value={selectedDistrict}
+            onChange={(e) => setSelectedDistrict(e.target.value)}
+            className="w-full bg-white/5 border border-white/10 text-white p-4 rounded-2xl appearance-none font-bold outline-none"
+          >
+            {Object.keys(districtCoords).map(dist => <option key={dist} value={dist} className="bg-slate-900">{dist}</option>)}
+          </select>
+          <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-emerald-500 pointer-events-none" />
         </div>
       </div>
 
-      {loading ? (
-        <div className="p-20 text-center"><Loader2 className="animate-spin w-12 h-12 text-emerald-600 mx-auto" /></div>
-      ) : weather && (
-        <div className="space-y-8 animate-in zoom-in-95">
-          {/* Weather Warning Section */}
-          {(weather.cond === "Snowfall" || weather.cond === "Rainy") && (
-            <div className="bg-rose-50 border-2 border-rose-100 p-6 rounded-[2.5rem] flex items-center gap-6">
-              <div className="p-4 bg-rose-500 text-white rounded-2xl animate-bounce"><AlertTriangle /></div>
-              <div className="text-right w-full" dir="rtl">
-                <p className="text-rose-900 font-black text-xl">موسمی انتباہ: {weather.cond === "Snowfall" ? 'برف باری' : 'بارش'} کا امکان!</p>
-                <p className="text-xs font-bold text-rose-700">احتیاطی تدابیر اختیار کریں۔</p>
-              </div>
-            </div>
-          )}
-
-          {/* Real-time Stats & Sun Cycle */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-             <div className="bg-white p-6 rounded-[2.5rem] border shadow-sm flex flex-col items-center text-center">
-                <Thermometer className="text-rose-500 mb-2" />
-                <p className="text-[10px] font-black uppercase text-slate-400">Temperature</p>
-                <p className="text-3xl font-black">{weather.temp}</p>
-             </div>
-             <div className="bg-white p-6 rounded-[2.5rem] border shadow-sm flex flex-col items-center text-center">
-                <Wind className="text-emerald-500 mb-2" />
-                <p className="text-[10px] font-black uppercase text-slate-400">Wind</p>
-                <p className="text-3xl font-black">{weather.wind}</p>
-             </div>
-             <div className="bg-white p-6 rounded-[2.5rem] border shadow-sm flex flex-col items-center text-center">
-                <Sunrise className="text-amber-500 mb-2" />
-                <p className="text-[10px] font-black uppercase text-slate-400">Sunrise</p>
-                <p className="text-xl font-bold">{weather.sunrise}</p>
-             </div>
-             <div className="bg-white p-6 rounded-[2.5rem] border shadow-sm flex flex-col items-center text-center">
-                <Sunset className="text-orange-500 mb-2" />
-                <p className="text-[10px] font-black uppercase text-slate-400">Sunset</p>
-                <p className="text-xl font-bold">{weather.sunset}</p>
-             </div>
-          </div>
-
-          {/* 4-Day Forecast Section */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-             {forecast.map((f, i) => (
-               <div key={i} className="bg-white/50 backdrop-blur-md p-6 rounded-[2.5rem] border border-white flex flex-col items-center text-center space-y-3 shadow-sm">
-                  <p className="text-[10px] font-black uppercase text-slate-400">{f.date}</p>
-                  <div className="text-emerald-600">
-                    {f.cond === "Snowfall" ? <Snowflake /> : f.cond === "Rainy" ? <CloudRain /> : <Sun />}
-                  </div>
-                  <p className="font-black text-slate-800">{f.cond}</p>
-                  <p className="text-xs font-bold text-emerald-700">{f.max} / {f.min}</p>
-               </div>
-             ))}
-          </div>
-
-          {/* Agri Advice Card (Real Urdu) */}
-          <div className="bg-emerald-950 p-12 rounded-[4rem] text-white relative shadow-2xl border-4 border-emerald-900 overflow-hidden">
-            <div className="relative z-10 text-right" dir="rtl">
-                <h4 className="text-emerald-400 text-xs font-black uppercase tracking-widest mb-6 flex items-center gap-3 justify-end underline underline-offset-8 decoration-emerald-500/30">زرعی مشورہ ({selectedDistrict}) <Sprout className="w-5 h-5" /></h4>
-                <p className="text-2xl md:text-4xl font-bold leading-relaxed whitespace-pre-line font-urdu">
-                    {aiAdvice}
-                </p>
-                <div className="mt-8 flex items-center gap-2 text-[9px] font-bold text-emerald-500/30 uppercase justify-end tracking-tighter">
-                    سیٹلائٹ ڈیٹا سے تصدیق شدہ <ShieldCheck className="w-3 h-3" />
-                </div>
-            </div>
+      {/* 2. SMART ALERT BOX */}
+      {alert.type !== 'none' && (
+        <div className={`p-6 rounded-[2rem] border-2 animate-bounce flex items-center gap-4 ${alert.type === 'frost' ? 'bg-blue-500/10 border-blue-500 text-blue-400' : 'bg-rose-500/10 border-rose-500 text-rose-400'}`}>
+          <div className={`p-3 rounded-2xl ${alert.type === 'frost' ? 'bg-blue-500' : 'bg-rose-500'} text-white`}><Zap size={24} /></div>
+          <div className="text-right flex-1">
+             <p className="font-urdu text-lg font-bold leading-tight">{alert.urdu}</p>
+             <p className="text-[9px] uppercase font-black tracking-widest opacity-60 mt-1">{alert.eng}</p>
           </div>
         </div>
       )}
+
+      {/* 3. DYNAMIC MAIN CARD */}
+      <div className={`bg-gradient-to-b ${theme.bg} p-8 md:p-12 rounded-[3rem] shadow-2xl relative overflow-hidden transition-all duration-1000`}>
+        {theme.status === 'rain' && <div className="absolute inset-0 bg-blue-500/10 animate-pulse pointer-events-none" />}
+        {theme.status === 'snow' && <div className="absolute inset-0 bg-white/20 animate-bounce duration-[3000ms] pointer-events-none" />}
+        
+        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div className={theme.status === 'snow' ? 'text-slate-900' : 'text-white'}>
+            <div className="flex items-center gap-2 font-black uppercase text-[10px] tracking-widest mb-4 opacity-70">
+              <MapPin size={14}/> {selectedDistrict}, J&K
+            </div>
+            <h1 className="text-7xl md:text-8xl font-black leading-none">{Math.round(currentTemp)}°</h1>
+            <div className="mt-4 space-y-1">
+              <p className="text-3xl font-urdu font-bold">{theme.urdu}</p>
+              <div className="flex items-center gap-3">
+                <p className="text-sm font-bold opacity-60">{theme.eng}</p>
+                <button onClick={() => speakWeather(currentTemp, theme.eng, theme.urdu)} className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition-all"><Volume2 size={16} /></button>
+              </div>
+            </div>
+          </div>
+          <MainIcon size={140} className={`opacity-40 absolute -right-6 -bottom-6 md:static ${theme.status === 'snow' ? 'text-slate-800' : 'text-white'}`} />
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-10 relative z-10">
+          <Stat label="Humidity" value={`${weather?.current?.relative_humidity_2m}%`} icon={Droplets} dark={theme.status === 'snow'} />
+          <Stat label="Wind" value={`${weather?.current?.wind_speed_10m} km/h`} icon={Wind} dark={theme.status === 'snow'} />
+          <Stat label="Feels" value={`${Math.round(weather?.current?.apparent_temperature)}°`} icon={Thermometer} dark={theme.status === 'snow'} />
+        </div>
+      </div>
+
+      {/* 4. WEEKLY OUTLOOK */}
+      <div className="space-y-4">
+        <p className="text-[10px] font-black uppercase text-emerald-500/40 tracking-[0.3em] px-4">Weekly Outlook</p>
+        <div className="flex overflow-x-auto no-scrollbar gap-4 pb-4 px-2">
+          {weather?.daily?.time.map((time: string, i: number) => {
+            const dayTheme = getWeatherTheme(weather.daily.weather_code[i]);
+            const DayIcon = dayTheme.icon;
+            const dayMax = weather.daily.temperature_2m_max[i];
+            return (
+              <button key={time} onClick={() => { setActiveDay({ date: time, max: dayMax, min: weather.daily.temperature_2m_min[i], theme: dayTheme }); speakWeather(dayMax, dayTheme.eng, dayTheme.urdu); }}
+                className="min-w-[110px] bg-white/5 border border-white/5 p-6 rounded-[2rem] flex flex-col items-center text-center hover:bg-emerald-500/10 transition-all active:scale-95 group"
+              >
+                <p className="text-[10px] font-black uppercase text-white/40 mb-3">{new Date(time).toLocaleDateString('en-US', { weekday: 'short' })}</p>
+                <DayIcon size={28} className="text-emerald-500 mb-3" />
+                <p className="text-xl font-bold text-white">{Math.round(dayMax)}°</p>
+              </button>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
-};
+}
 
-export default WeatherHub;
+function Stat({ label, value, icon: Icon, dark }: any) {
+  return (
+    <div className={`backdrop-blur-md p-4 rounded-2xl flex items-center gap-3 border ${dark ? 'bg-black/5 border-black/5' : 'bg-white/10 border-white/5'}`}>
+      <Icon size={20} className={dark ? 'text-slate-800' : 'text-blue-200'} />
+      <div className="text-right">
+        <p className={`text-[8px] uppercase font-black mb-1 ${dark ? 'text-slate-600' : 'text-blue-200/60'}`}>{label}</p>
+        <p className={`text-sm font-bold ${dark ? 'text-slate-900' : 'text-white'}`}>{value}</p>
+      </div>
+    </div>
+  );
+}

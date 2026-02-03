@@ -1,19 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import * as ReactRouterDOM from 'react-router-dom';
-const { HashRouter, Routes, Route, Link, useLocation } = ReactRouterDOM as any;
+const { HashRouter, Routes, Route, Link, useLocation, Navigate } = ReactRouterDOM as any;
 
 import { 
-  LayoutDashboard, Menu, X, CloudSun, Store, MessageCircle, Zap, BookOpen, 
-  Warehouse, MapPin, Sun, Moon, Key, ChevronRight, Rabbit, TrendingUp, 
-  Syringe, ScanEye, Settings, Award, FlaskConical, BarChart3, Microscope, 
-  ShieldCheck, Clock, Users, User, Phone, MessageSquare, Plus, Edit, Trash2, Calendar
+  LayoutDashboard, Menu, X, CloudSun, MessageCircle, User, 
+  ScanEye, Syringe, Microscope, FlaskConical, Rabbit, Settings, MapPin, Lock,
+  BookOpen, Warehouse, Sun, Moon, BarChart3, ShieldCheck, Calendar,
+  TrendingUp, Calculator, Landmark, GraduationCap, MapPinned, FileText, Users
 } from 'lucide-react';
 
 // Pages Import
 import Dashboard from './pages/Dashboard';
 import ExpertChat from './pages/ExpertChat';
 import KnowledgeHub from './pages/KnowledgeHub';
-import Admin from './pages/Admin';
 import WeatherHub from './pages/WeatherHub';
 import FarmingCalendar from './pages/FarmingCalendar';
 import SoilHealth from './pages/SoilHealth';
@@ -24,169 +23,143 @@ import DosageCalculator from './pages/DosageCalculator';
 import SmartDiagnose from './pages/SmartDiagnose';
 import CAStorageHub from './pages/CAStorageHub';
 import DealerLocator from './pages/DealerLocator';
-import GradingGuide from './pages/GradingGuide';
 import MarketPrices from './pages/MarketPrices';
-import DiseaseDetection from './pages/DiseaseDetection';
-import LivestockAI from './pages/LivestockAI';
-import SmartHarvest from './pages/SmartHarvest';
-import SprayTracker from './pages/SprayTracker';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfUse from './pages/TermsOfUse';
 import FarmerLogin from './pages/FarmerLogin';
-import CommunityForum from './pages/CommunityForum'; // Yaqeen karein ke ye line mojood hai// Routes section mein isay update karein
-<Route path="/community" element={<CommunityForum />} /> // Path ko '/community' hi rakhein kyunke dashboard yahi mang raha hai// Components
-import RotatingLogo from './components/RotatingLogo';
-import Footer from './components/Footer';
-import DigitalClock from './components/DigitalClock';
-import { TopTicker } from './components/NewsTicker';
+import FarmerPortal from './pages/FarmerPortal';
+import CommunityForum from './pages/CommunityForum';
+import LivestockAI from './pages/LivestockAI';
+import SprayTracker from './pages/SprayTracker';
+import Admin from './pages/Admin'; 
 
-const ScrollToTop = () => {
-  const { pathname } = useLocation();
-  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
-  return null;
+import Footer from './components/Footer';
+
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const userToken = localStorage.getItem('fck_user_token');
+  if (!userToken) return <Navigate to="/farmer-portal" replace />;
+  return <>{children}</>;
 };
 
-type ThemeMode = 'standard' | 'green' | 'high-contrast';
-
 export default function App() {
-  const [theme, setTheme] = useState<ThemeMode>((localStorage.getItem('fck_theme') as ThemeMode) || 'standard');
-
-  useEffect(() => {
-    localStorage.setItem('fck_theme', theme);
-  }, [theme]);
-
-  const isHighContrast = theme === 'high-contrast';
-  const isGreenTheme = theme === 'green';
-
   return (
     <HashRouter>
-      <ScrollToTop />
-      <div className={`min-h-screen flex flex-col lg:flex-row relative transition-colors duration-500 ${isHighContrast ? 'bg-black text-yellow-400' : isGreenTheme ? 'bg-emerald-950' : 'bg-slate-100'}`}>
-        
-        {/* Fixed Background Layer (No more External Image Errors) */}
-        <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-          <div className={`absolute inset-0 transition-all duration-1000 ${
-            isHighContrast 
-            ? 'bg-black' 
-            : 'bg-gradient-to-br from-emerald-950 via-emerald-900 to-slate-900 opacity-100'
-          }`} />
-        </div>
-
-        <TopTicker />
-        <SidebarNavigation theme={theme} setTheme={setTheme} />
-        
-        <div className="flex-1 flex flex-col lg:ml-72 relative z-20">
-          <main className={`flex-1 p-4 lg:p-12 pb-48 pt-16 lg:pt-20 backdrop-blur-[2px] transition-all duration-1000 ${
-            isHighContrast ? 'bg-black' : 'bg-white/10'
-          }`}>
-            <div className="max-w-7xl mx-auto">
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/farmer-portal" element={<FarmerLogin />} />
-                <Route path="/fck-scanner" element={<SmartDiagnose />} />
-                <Route path="/livestock" element={<LivestockAI />} />
-                <Route path="/harvest" element={<SmartHarvest />} />
-                <Route path="/spray-track" element={<SprayTracker />} />
-                <Route path="/ca-storage" element={<CAStorageHub />} />
-                <Route path="/dealers" element={<DealerLocator />} />
-                <Route path="/grading" element={<GradingGuide />} />
-                <Route path="/weather" element={<WeatherHub />} />
-                <Route path="/calendar" element={<FarmingCalendar />} />
-                <Route path="/soil" element={<SoilHealth />} />
-                <Route path="/dosage" element={<DosageCalculator />} />
-                <Route path="/mandi-stats" element={<MandiAnalytics />} />
-                <Route path="/profit-calc" element={<ProfitCalculator />} />
-                <Route path="/subsidies" element={<SubsidyTracker />} />
-                <Route path="/market" element={<MarketPrices />} />
-                <Route path="/expert" element={<ExpertChat />} />
-                <Route path="/knowledge" element={<KnowledgeHub />} />
-                <Route path="/forum" element={<CommunityForum />} />
-                <Route path="/admin" element={<Admin />} />
-                <Route path="/privacy" element={<PrivacyPolicy />} />
-                <Route path="/terms" element={<TermsOfUse />} />
-              </Routes>
-            </div>
-          </main>
-          <Footer />
-        </div>
-      </div>
+      <AppContent />
     </HashRouter>
   );
 }
 
-const SidebarNavigation = ({ theme, setTheme }: { theme: ThemeMode, setTheme: (t: ThemeMode) => void }) => {
+function AppContent() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
-  const isHighContrast = theme === 'high-contrast';
-  const isGreenTheme = theme === 'green';
-
-  const navGroups = [
-    {
-      title: "Core Services",
-      items: [
-        { path: '/', label: 'Dashboard', icon: LayoutDashboard },
-        { path: '/farmer-portal', label: 'Farmer Portal', icon: User },
-        { path: '/expert', label: 'Ask Expert AI', icon: MessageCircle },
-        { path: '/weather', label: 'Weather Hub', icon: CloudSun },
-      ]
-    },
-    {
-      title: "Orchard Tools",
-      items: [
-        { path: '/fck-scanner', label: 'FC Scanner Pro', icon: ScanEye }, // Branding Update
-        { path: '/spray-track', label: 'Spray Auditor', icon: Syringe },
-        { path: '/soil', label: 'Soil Health', icon: Microscope },
-        { path: '/dosage', label: 'Dosage Calc', icon: FlaskConical },
-      ]
-    },
-    {
-        title: "Animal Care",
-        items: [
-          { path: '/livestock', label: 'Livestock AI', icon: Rabbit },
-        ]
-    }
-  ];
+  const userName = localStorage.getItem('fck_user_name');
 
   return (
-    <>
-      <div className={`lg:hidden fixed top-0 left-0 right-0 z-[120] p-4 flex items-center justify-between ${isHighContrast ? 'bg-black border-b border-yellow-400 text-yellow-400' : 'bg-emerald-900 text-white'}`}>
-        <div className="flex items-center gap-3"><RotatingLogo size="sm" /><span className="font-bold text-xs text-white">FC Kashmir</span></div>
-        <button onClick={() => setIsOpen(!isOpen)} className="p-2"><Menu className="w-6 h-6" /></button>
-      </div>
-
-      <nav className={`fixed inset-y-0 left-0 z-[110] w-72 transform transition-transform duration-300 lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'} ${isHighContrast ? 'bg-black border-r border-yellow-400' : 'bg-emerald-950 text-white'} border-r overflow-y-auto no-scrollbar shadow-2xl`}>
-        <div className="h-full flex flex-col p-6">
-          <div className="flex items-center gap-4 mb-8"><RotatingLogo /><div><h1 className={`font-heading font-bold text-lg ${isHighContrast ? 'text-yellow-400' : 'text-white'}`}>FC Kashmir</h1><p className="text-[9px] uppercase font-black text-emerald-400">Digital Valley Hub</p></div></div>
-          
-          <div className="mb-8"><DigitalClock /></div>
-
-          <div className="flex-1 space-y-8">
-            {navGroups.map((group, i) => (
-              <div key={i} className="space-y-2 text-left">
-                <p className="text-[10px] font-black uppercase text-emerald-500/50 tracking-widest px-4">{group.title}</p>
-                <div className="space-y-1">
-                  {group.items.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = location.pathname === item.path;
-                    return (
-                      <Link key={item.path} to={item.path} onClick={() => setIsOpen(false)} className={`flex items-center gap-4 px-4 py-2.5 rounded-xl transition-all ${isActive ? 'bg-emerald-800 text-white shadow-lg' : 'text-emerald-100 hover:bg-white/10'}`}>
-                        <Icon className="w-4.5 h-4.5" /><span className="font-semibold text-sm">{item.label}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
+    <div className="min-h-screen bg-slate-950 text-white flex flex-col lg:flex-row">
+      {/* SIDEBAR WITH ALL PAGES RESTORED */}
+      <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-emerald-950 border-r border-white/10 transition-transform lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'} overflow-y-auto no-scrollbar shadow-2xl`}>
+        <div className="p-6 flex flex-col min-h-full">
+          {/* REVOLVING LOGO */}
+          <div className="flex items-center gap-4 mb-10 shrink-0">
+            <div className="animate-revolve w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center font-black text-black text-xl shadow-lg">FC</div>
+            <h1 className="font-black text-xl tracking-tighter uppercase text-white">FC KASHMIR</h1>
           </div>
 
-          <div className="mt-10 pt-6 border-t border-white/10">
-            <button onClick={() => setTheme(theme === 'standard' ? 'green' : theme === 'green' ? 'high-contrast' : 'standard')} className="w-full flex items-center justify-center gap-3 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest bg-white/5 text-emerald-300 border border-white/10">
-              <Settings className="w-4 h-4" /> Cycle Theme
-            </button>
-          </div>
+          <nav className="flex-1 space-y-6 pb-10">
+            <NavGroup title="Main Hub | مین">
+              <NavLink to="/" icon={LayoutDashboard} label="Dashboard | ڈیش بورڈ" active={location.pathname === '/'} onClick={() => setIsOpen(false)} />
+              <NavLink to="/my-portal" icon={User} label={userName ? `Verified: ${userName}` : "Farmer Portal | کسان پورٹل"} active={location.pathname === '/my-portal'} onClick={() => setIsOpen(false)} />
+              <NavLink to="/expert" icon={MessageCircle} label="Ask Expert AI | ماہر" active={location.pathname === '/expert'} onClick={() => setIsOpen(false)} />
+              <NavLink to="/admin" icon={Settings} label="Admin Station | اسٹیشن" active={location.pathname === '/admin'} onClick={() => setIsOpen(false)} />
+            </NavGroup>
+
+            <NavGroup title="Real-time | تازہ ترین">
+              <NavLink to="/weather" icon={CloudSun} label="Weather | موسم" active={location.pathname === '/weather'} onClick={() => setIsOpen(false)} />
+              <NavLink to="/market" icon={BarChart3} label="Mandi | منڈی" active={location.pathname === '/market'} onClick={() => setIsOpen(false)} />
+              <NavLink to="/mandi-stats" icon={TrendingUp} label="Price Stats | تجزیہ" active={location.pathname === '/mandi-stats'} onClick={() => setIsOpen(false)} />
+            </NavGroup>
+
+            <NavGroup title="Orchard Tools | باغات کے اوزار">
+              <NavLink to="/fck-scanner" icon={ScanEye} label="AI Scanner | اسکینر" active={location.pathname === '/fck-scanner'} onClick={() => setIsOpen(false)} />
+              <NavLink to="/spray-track" icon={Syringe} label="Spray Audit | اسپرے" active={location.pathname === '/spray-track'} onClick={() => setIsOpen(false)} />
+              <NavLink to="/soil" icon={Microscope} label="Soil Health | مٹی" active={location.pathname === '/soil'} onClick={() => setIsOpen(false)} />
+              <NavLink to="/calendar" icon={Calendar} label="Crop Calendar | کیلنڈر" active={location.pathname === '/calendar'} onClick={() => setIsOpen(false)} />
+            </NavGroup>
+
+            <NavGroup title="Analysis & Finance | تجزیہ و مالیات">
+              <NavLink to="/profit-calc" icon={Calculator} label="Profit Calc | منافع" active={location.pathname === '/profit-calc'} onClick={() => setIsOpen(false)} />
+              <NavLink to="/dosage" icon={FlaskConical} label="Dosage Calc | خوراک" active={location.pathname === '/dosage'} onClick={() => setIsOpen(false)} />
+              <NavLink to="/subsidies" icon={Landmark} label="Subsidies | سبسڈی" active={location.pathname === '/subsidies'} onClick={() => setIsOpen(false)} />
+            </NavGroup>
+
+            <NavGroup title="Logistics | رسد">
+              <NavLink to="/dealers" icon={MapPinned} label="Dealers | ڈیلرز" active={location.pathname === '/dealers'} onClick={() => setIsOpen(false)} />
+              <NavLink to="/ca-storage" icon={Warehouse} label="CA Storage | اسٹوریج" active={location.pathname === '/ca-storage'} onClick={() => setIsOpen(false)} />
+              <NavLink to="/livestock" icon={Rabbit} label="Livestock AI | مویشی" active={location.pathname === '/livestock'} onClick={() => setIsOpen(false)} />
+            </NavGroup>
+
+            <NavGroup title="Resources | وسائل">
+              <NavLink to="/forum" icon={Users} label="Forum | فورم" active={location.pathname === '/forum'} onClick={() => setIsOpen(false)} />
+              <NavLink to="/knowledge" icon={GraduationCap} label="Knowledge | علم" active={location.pathname === '/knowledge'} onClick={() => setIsOpen(false)} />
+              <NavLink to="/privacy" icon={ShieldCheck} label="Privacy | رازداری" active={location.pathname === '/privacy'} onClick={() => setIsOpen(false)} />
+              <NavLink to="/terms" icon={FileText} label="Terms | شرائط" active={location.pathname === '/terms'} onClick={() => setIsOpen(false)} />
+            </NavGroup>
+          </nav>
         </div>
-      </nav>
-      {isOpen && <div className="fixed inset-0 bg-black/60 z-[105] lg:hidden" onClick={() => setIsOpen(false)} />}
-    </>
+      </aside>
+
+      <main className="flex-1 lg:ml-72 flex flex-col min-h-screen">
+        <header className="lg:hidden p-4 bg-emerald-900 flex justify-between items-center sticky top-0 z-40 shadow-lg">
+          <span className="font-black">FC KASHMIR</span>
+          <button onClick={() => setIsOpen(!isOpen)}><Menu /></button>
+        </header>
+        <div className="flex-1 p-4 md:p-8">
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/farmer-portal" element={<FarmerLogin />} />
+            <Route path="/my-portal" element={<ProtectedRoute><FarmerPortal /></ProtectedRoute>} />
+            <Route path="/admin" element={<Admin />} /> 
+            <Route path="/weather" element={<WeatherHub />} />
+            <Route path="/market" element={<MarketPrices />} />
+            <Route path="/fck-scanner" element={<ProtectedRoute><SmartDiagnose /></ProtectedRoute>} />
+            <Route path="/expert" element={<ProtectedRoute><ExpertChat /></ProtectedRoute>} />
+            <Route path="/knowledge" element={<KnowledgeHub />} />
+            <Route path="/spray-track" element={<ProtectedRoute><SprayTracker /></ProtectedRoute>} />
+            <Route path="/dealers" element={<ProtectedRoute><DealerLocator /></ProtectedRoute>} />
+            <Route path="/calendar" element={<ProtectedRoute><FarmingCalendar /></ProtectedRoute>} />
+            <Route path="/soil" element={<ProtectedRoute><SoilHealth /></ProtectedRoute>} />
+            <Route path="/dosage" element={<ProtectedRoute><DosageCalculator /></ProtectedRoute>} />
+            <Route path="/mandi-stats" element={<ProtectedRoute><MandiAnalytics /></ProtectedRoute>} />
+            <Route path="/profit-calc" element={<ProtectedRoute><ProfitCalculator /></ProtectedRoute>} />
+            <Route path="/subsidies" element={<ProtectedRoute><SubsidyTracker /></ProtectedRoute>} />
+            <Route path="/forum" element={<ProtectedRoute><CommunityForum /></ProtectedRoute>} />
+            <Route path="/ca-storage" element={<ProtectedRoute><CAStorageHub /></ProtectedRoute>} />
+            <Route path="/livestock" element={<ProtectedRoute><LivestockAI /></ProtectedRoute>} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<TermsOfUse />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </div>
+        <Footer />
+      </main>
+      {isOpen && <div className="fixed inset-0 bg-black/60 z-40 lg:hidden" onClick={() => setIsOpen(false)} />}
+    </div>
   );
-};
+}
+
+function NavLink({ to, icon: Icon, label, active, onClick }: any) {
+  return (
+    <Link to={to} onClick={onClick} className={`flex items-center gap-4 px-4 py-3 rounded-xl font-bold transition-all ${active ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20' : 'hover:bg-white/5 text-white/70'}`}>
+      <Icon size={18} /> <span className="text-sm font-urdu leading-none">{label}</span>
+    </Link>
+  );
+}
+
+function NavGroup({ title, children }: any) {
+  return (
+    <div className="space-y-1">
+      <p className="text-[10px] font-black uppercase text-emerald-500/40 px-4 tracking-[0.2em] font-urdu">{title}</p>
+      {children}
+    </div>
+  );
+}
