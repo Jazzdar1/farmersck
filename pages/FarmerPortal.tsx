@@ -4,7 +4,7 @@ import {
   ShieldCheck, Volume2, VolumeX, AlertTriangle, CheckCircle, 
   Calendar, Clock, User, MessageCircle, ScanEye, BarChart3,
   CloudSun, FlaskConical, Tractor, BookOpen, Calculator, 
-  Activity, Users, BellRing, Quote, LogOut, Wallet, TrendingUp, PieChart, ChevronLeft
+  Activity, Users, BellRing, Quote, Wallet, TrendingUp, PieChart, ChevronLeft
 } from 'lucide-react';
 
 export default function FarmerPortal() {
@@ -15,7 +15,6 @@ export default function FarmerPortal() {
   const [quote, setQuote] = useState({ text: "", author: "" });
   const puter = (window as any).puter;
 
-  // Mock Data for Finance Card
   const stats = { netProfit: "96,700" };
 
   const quotes = [
@@ -75,7 +74,7 @@ export default function FarmerPortal() {
   return (
     <div className="min-h-screen bg-black text-white font-sans overflow-x-hidden pb-10" dir="rtl">
       
-      {/* HEADER */}
+      {/* HEADER - No Logout */}
       <header className="bg-[#1A1A1A] p-6 flex justify-between items-center border-b border-white/5 sticky top-0 z-50">
         <div className="flex items-center gap-4">
           <div className="bg-[#FFC107] p-2 rounded-xl text-black shadow-lg"><ShieldCheck size={20} /></div>
@@ -86,7 +85,6 @@ export default function FarmerPortal() {
           <button onClick={() => setVoiceEnabled(!voiceEnabled)} className={`p-2 rounded-xl ${voiceEnabled ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
             {voiceEnabled ? <Volume2 size={20}/> : <VolumeX size={20}/>}
           </button>
-          <button onClick={() => { localStorage.clear(); navigate('/'); }} className="p-2 bg-rose-600/10 text-rose-500 rounded-xl border border-rose-600/20"><LogOut size={20} /></button>
         </div>
       </header>
 
@@ -105,18 +103,8 @@ export default function FarmerPortal() {
         </div>
       </div>
 
-      {/* QUOTE SECTION */}
-      <div className="px-6 mb-2">
-        <div className="bg-gradient-to-r from-[#1A1A1A] to-black p-8 rounded-[3rem] border border-white/5 relative text-center">
-          <Quote className="absolute top-4 right-4 text-white/5" size={40} />
-          <p className="text-2xl font-nastaleeq leading-relaxed text-[#FFC107] italic mb-2">"{quote.text}"</p>
-          <p className="text-[10px] font-black uppercase text-white/30">— {quote.author}</p>
-        </div>
-      </div>
-
-      {/* TILES GRID */}
+      {/* DASHBOARD TILES */}
       <div className="p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Tile onClick={() => navigate('/my-portal')} icon={User} label="پروفائل" sub="PROFILE" bg="bg-blue-600" />
         <Tile onClick={() => navigate('/farm-manager')} icon={Calculator} label="فارم منیجر" sub="FINANCE" bg="bg-emerald-600" />
         <Tile onClick={() => navigate('/fck-scanner')} icon={ScanEye} label="اسکینر پرو" sub="DISEASE SCAN" bg="bg-[#FFC107]" iconColor="text-black" />
         <Tile onClick={() => navigate('/expert')} icon={MessageCircle} label="ماہرانہ رائے" sub="AI EXPERT" bg="bg-purple-600" />
@@ -125,24 +113,6 @@ export default function FarmerPortal() {
         <Tile onClick={() => navigate('/soil')} icon={FlaskConical} label="مٹی کا ٹیسٹ" sub="SOIL ANALYSIS" bg="bg-indigo-600" />
         <Tile onClick={() => navigate('/news')} icon={BookOpen} label="زرعی خبریں" sub="AGRI NEWS" bg="bg-sky-600" />
       </div>
-
-      {/* MODAL REMAINING... */}
-      {activeAlert && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/95 backdrop-blur-md">
-          <div className="bg-[#1A1A1A] w-full max-w-md rounded-[3rem] border border-rose-500/30 p-8 text-center animate-in zoom-in shadow-2xl">
-            <div className="bg-rose-600 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 animate-bounce">
-              <BellRing size={32} className="text-white" />
-            </div>
-            <h2 className="text-2xl font-black text-white mb-2 uppercase">Spray Alert!</h2>
-            <p className="text-xs text-white/40 font-nastaleeq mb-6 italic">گزارش ہے کہ شیڈول کے مطابق اسپرے مکمل کریں۔</p>
-            <div className="space-y-4">
-              <input type="date" className="w-full bg-white/5 p-4 rounded-2xl text-[#FFC107] font-black text-center outline-none border border-white/10" onChange={(e) => setNewDate(e.target.value)} />
-              <button onClick={() => handleTaskUpdate('done')} className="w-full py-5 bg-emerald-600 text-black font-black rounded-2xl text-[12px] uppercase tracking-widest">MARK AS DONE</button>
-              <button onClick={() => handleTaskUpdate('reschedule')} disabled={!newDate} className="w-full py-5 bg-white/5 border border-white/10 text-[#FFC107] font-black rounded-2xl text-[10px] uppercase opacity-50">RESCHEDULE</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
