@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   Camera, 
@@ -7,17 +6,11 @@ import {
   AlertCircle, 
   CheckCircle2, 
   Zap, 
-  X, 
-  Image as ImageIcon, 
   Scan, 
-  Activity, 
-  ShieldAlert, 
-  Share2,
-  MessageCircle as WhatsAppIcon,
-  ChevronRight,
-  Info
+  MessageCircle as WhatsAppIcon
 } from 'lucide-react';
-import { analyzeCropDisease } from '../services/gemini';
+// ✅ FIXED IMPORT: Using puterService instead of gemini
+import { analyzeCropDisease } from '../services/puterService';
 import { DiseaseAnalysis } from '../types';
 
 const DiseaseDetection: React.FC = () => {
@@ -98,6 +91,7 @@ const DiseaseDetection: React.FC = () => {
     setError(null);
     setAnalysis(null);
     try {
+      // ✅ Using the function from puterService now
       const result = await analyzeCropDisease(imgBase64.split(',')[1], 'en');
       setAnalysis(result);
     } catch (err) {
