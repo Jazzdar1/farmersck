@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, BookOpen, Play, FileText, ExternalLink, Youtube } from 'lucide-react';
+import { ArrowLeft, BookOpen, Play, FileText, ExternalLink, Youtube, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function KnowledgeHub() {
@@ -21,6 +21,7 @@ export default function KnowledgeHub() {
 
   return (
     <div className="min-h-screen bg-[#020408] text-white p-6 font-sans" dir="rtl">
+      {/* Header */}
       <div className="flex items-center gap-4 mb-8">
         <button onClick={() => navigate('/')} className="p-3 bg-white/5 rounded-2xl hover:bg-white/10"><ArrowLeft /></button>
         <div className="text-right">
@@ -30,7 +31,10 @@ export default function KnowledgeHub() {
       </div>
 
       {loading ? (
-          <p className="text-center text-white/30">Loading Library...</p>
+          <div className="text-center py-20 flex flex-col items-center">
+              <Loader2 className="animate-spin text-sky-500 mb-2"/>
+              <p className="text-white/30 text-xs uppercase tracking-widest">Loading Library...</p>
+          </div>
       ) : items.length === 0 ? (
           <div className="text-center py-20 opacity-40">
               <BookOpen size={60} className="mx-auto mb-4"/>
@@ -48,7 +52,7 @@ export default function KnowledgeHub() {
                               {item.category === 'Video' ? <Youtube size={24}/> : <FileText size={24}/>}
                           </div>
                           <h3 className="font-black text-xl text-white mb-2 leading-tight">{item.title}</h3>
-                          <p className="text-white/50 text-sm leading-relaxed">{item.desc}</p>
+                          <p className="text-white/50 text-sm leading-relaxed font-urdu">{item.desc}</p>
                       </div>
 
                       <a 

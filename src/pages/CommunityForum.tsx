@@ -1,264 +1,171 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
-  MessageCircle, ThumbsUp, Image as ImageIcon, Search, 
-  Send, Share2, MessageSquare, Flag, Camera, X, Filter 
+  ArrowLeft, Users, MessageSquare, Heart, Share2, 
+  Image as ImageIcon, Send, Search, Globe, MoreHorizontal 
 } from 'lucide-react';
 
-interface Post {
-  id: number;
-  user: string;
-  role: 'Farmer' | 'Expert' | 'Admin';
-  content: string;
-  image?: string; // Optional Image
-  likes: number;
-  comments: number;
-  time: string;
-  category: string;
-  isLiked?: boolean;
-}
-
 export default function CommunityForum() {
-  // Initial Mock Data (Agar local storage khali ho)
-  const initialPosts: Post[] = [
-    {
-      id: 1,
-      user: "Gulzar Ahmed",
-      role: "Farmer",
-      content: "Mere Shopian wale baagh mein scab ki problem aa rahi hai. Kya koi naya fungicide aaya hai?",
-      likes: 12,
-      comments: 5,
-      time: "2 hours ago",
-      category: "Disease",
-      isLiked: false
-    },
-    {
-      id: 2,
-      user: "Dr. Rafiq (SKUAST)",
-      role: "Expert",
-      content: "⚠️ Weather Alert: Agle 3 din baarish hone ka imkan hai. Kisaan hazraat spray rok dein.",
-      likes: 45,
-      comments: 12,
-      time: "5 hours ago",
-      category: "Advisory",
-      isLiked: false
-    }
-  ];
-
-  // State Management
-  const [posts, setPosts] = useState<Post[]>(() => {
-    const saved = localStorage.getItem('fc_forum_posts');
-    return saved ? JSON.parse(saved) : initialPosts;
-  });
+  const navigate = useNavigate();
+  const [language, setLanguage] = useState<'ur' | 'en'>('ur');
+  const [newPost, setNewPost] = useState('');
   
-  const [newPostContent, setNewPostContent] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("General");
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [filter, setFilter] = useState("All");
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // Mock Posts
+  const [posts, setPosts] = useState([
+    { id: 1, user: "Gulzar Ahmad", role: "Orchardist", time: "2h ago", content: "Is saal scab ki bimari bohot zyada hai. Koi acchi fungicide suggest karein?", contentEn: "Scab disease is very severe this year. Can anyone suggest a good fungicide?", likes: 12, comments: 4 },
+    { id: 2, user: "Tariq Bhat", role: "Expert", time: "5h ago", content: "Barish ke foran baad urea ka istemal na karein.", contentEn: "Do not apply urea immediately after rain.", likes: 45, comments: 10 }
+  ]);
 
-  // Save to LocalStorage whenever posts change
-  useEffect(() => {
-    localStorage.setItem('fc_forum_posts', JSON.stringify(posts));
-  }, [posts]);
-
-  // Handle Image Upload
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setSelectedImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+  const content = {
+    ur: {
+      title: "کسان فورم",
+      subtitle: "کمیونٹی",
+      createPlaceholder: "یہاں کچھ لکھیں یا سوال پوچھیں...",
+      postBtn: "پوسٹ کریں",
+      searchPlaceholder: "تلاش کریں...",
+      filters: ["تازہ ترین", "مشہور", "میرے سوالات"],
+      like: "پسند",
+      comment: "تبصرہ",
+      share: "شیئر"
+    },
+    en: {
+      title: "Community Forum",
+      subtitle: "Community",
+      createPlaceholder: "Write something or ask a question...",
+      postBtn: "Post",
+      searchPlaceholder: "Search topics...",
+      filters: ["Recent", "Trending", "My Posts"],
+      like: "Like",
+      comment: "Comment",
+      share: "Share"
     }
   };
 
-  // ✅ POST FUNCTION (Jo pehle nahi chal raha tha)
+  const t = content[language];
+
   const handlePost = () => {
-    if (!newPostContent.trim() && !selectedImage) return;
-
-    const newPost: Post = {
+    if(!newPost) return;
+    const post = {
       id: Date.now(),
-      user: "You (Farmer)", // In future, get from Auth
+      user: "You",
       role: "Farmer",
-      content: newPostContent,
-      image: selectedImage || undefined,
-      likes: 0,
-      comments: 0,
       time: "Just now",
-      category: selectedCategory,
-      isLiked: false
+      content: newPost,
+      contentEn: newPost,
+      likes: 0,
+      comments: 0
     };
-
-    // Add new post to top of list
-    setPosts([newPost, ...posts]);
-    
-    // Reset Form
-    setNewPostContent("");
-    setSelectedImage(null);
-    setSelectedCategory("General");
+    setPosts([post, ...posts]);
+    setNewPost('');
   };
-
-  // Like Function
-  const toggleLike = (id: number) => {
-    setPosts(posts.map(post => {
-      if (post.id === id) {
-        return {
-          ...post,
-          likes: post.isLiked ? post.likes - 1 : post.likes + 1,
-          isLiked: !post.isLiked
-        };
-      }
-      return post;
-    }));
-  };
-
-  // Filter Logic
-  const filteredPosts = filter === "All" ? posts : posts.filter(p => p.category === filter);
-
-  const categories = ["General", "Disease", "Market", "Advisory", "Seeds"];
 
   return (
-    <div className="min-h-screen bg-[#020408] text-white p-4 md:p-6 pb-24 font-sans" dir="rtl">
+    <div className="min-h-screen bg-[#020408] text-white p-6 pb-24 font-sans transition-all duration-300" dir={language === 'ur' ? 'rtl' : 'ltr'}>
       
-      {/* Header */}
-      <div className="bg-[#0a0c10] p-6 rounded-[2.5rem] border border-white/5 mb-6 shadow-2xl flex justify-between items-center">
-        <div>
-           <h1 className="text-2xl font-black italic tracking-tighter text-white">Community Forum</h1>
-           <p className="text-emerald-500 font-bold font-urdu text-xs">کسانوں کی اپنی آواز</p>
+      {/* HEADER */}
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+            <button onClick={() => navigate('/')} className="p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-colors">
+                <ArrowLeft size={20} className={language === 'ur' ? '' : 'rotate-180'} />
+            </button>
+            <div>
+                <h1 className={`text-2xl font-black italic ${language === 'ur' ? 'font-urdu' : ''}`}>{t.title}</h1>
+                <p className="text-pink-500 text-xs font-bold uppercase tracking-widest">{t.subtitle}</p>
+            </div>
         </div>
-        <div className="bg-emerald-500/10 p-3 rounded-full">
-           <MessageCircle className="text-emerald-500" size={24} />
-        </div>
-      </div>
-
-      {/* 📝 CREATE POST SECTION (Upgraded) */}
-      <div className="bg-[#0a0c10] p-5 rounded-[2rem] border border-white/5 mb-8 shadow-xl animate-in slide-in-from-top-4">
         
-        {/* Category Selector */}
-        <div className="flex gap-2 mb-4 overflow-x-auto no-scrollbar pb-2">
-          {categories.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all border ${
-                selectedCategory === cat 
-                ? 'bg-emerald-600 text-white border-emerald-500' 
-                : 'bg-[#020408] text-white/40 border-white/10'
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
+        {/* Language Toggle */}
+        <button 
+           onClick={() => setLanguage(language === 'ur' ? 'en' : 'ur')}
+           className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10 hover:bg-white/10 transition-all"
+        >
+             <Globe size={16} className="text-pink-400" />
+             <span className="text-xs font-bold uppercase">{language === 'ur' ? 'English' : 'اردو'}</span>
+        </button>
+      </div>
 
-        {/* Text Area */}
-        <textarea 
-          value={newPostContent}
-          onChange={(e) => setNewPostContent(e.target.value)}
-          placeholder="Apna sawal yahan likhein... (e.g. Scab ki dawa?)" 
-          className="w-full bg-[#020408] border border-white/10 rounded-2xl p-4 text-white placeholder:text-gray-600 focus:outline-none focus:border-emerald-500 transition-all font-urdu min-h-[100px] mb-4 text-right"
-        />
-
-        {/* Image Preview */}
-        {selectedImage && (
-          <div className="relative mb-4 w-fit">
-            <img src={selectedImage} alt="Preview" className="h-24 w-24 object-cover rounded-xl border border-white/10" />
-            <button onClick={() => setSelectedImage(null)} className="absolute -top-2 -right-2 bg-rose-500 text-white p-1 rounded-full shadow-lg">
-              <X size={12} />
-            </button>
+      {/* CREATE POST INPUT */}
+      <div className="bg-[#0a0c10] p-6 rounded-[2.5rem] border border-white/5 mb-8 shadow-xl">
+          <div className="flex gap-4 mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-rose-600 rounded-full flex items-center justify-center font-bold text-xl shadow-lg shadow-pink-500/20">U</div>
+              <textarea 
+                value={newPost}
+                onChange={(e) => setNewPost(e.target.value)}
+                placeholder={t.createPlaceholder}
+                className={`flex-1 bg-transparent border-none outline-none text-lg resize-none placeholder-white/30 h-20 ${language === 'ur' ? 'font-urdu' : ''}`}
+              />
           </div>
-        )}
-
-        {/* Actions Bar */}
-        <div className="flex justify-between items-center border-t border-white/5 pt-4">
-           <div className="flex gap-4">
-              <button onClick={() => fileInputRef.current?.click()} className="text-emerald-500 flex items-center gap-2 text-xs font-bold hover:bg-emerald-500/10 px-3 py-2 rounded-xl transition-all">
-                 <Camera size={18} /> <span className="hidden md:inline">Add Photo</span>
+          <div className="flex justify-between items-center border-t border-white/5 pt-4">
+              <button className="text-white/40 hover:text-white transition-colors flex items-center gap-2 p-2 rounded-xl hover:bg-white/5">
+                  <ImageIcon size={20} /> <span className="text-xs font-bold uppercase hidden md:inline">Photo</span>
               </button>
-              <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" />
-           </div>
-
-           <button 
-             onClick={handlePost}
-             disabled={!newPostContent && !selectedImage}
-             className="bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-emerald-900/40 transition-all"
-           >
-             Post Now <Send size={16} />
-           </button>
-        </div>
-      </div>
-
-      {/* 🔍 FILTERS */}
-      <div className="flex items-center justify-between mb-4 px-2">
-         <h3 className="text-white font-bold text-sm">Recent Discussions</h3>
-         <div className="flex gap-2">
-            <button onClick={() => setFilter("All")} className={`text-[10px] font-bold px-3 py-1 rounded-lg ${filter === 'All' ? 'bg-white text-black' : 'text-white/40'}`}>All</button>
-            <button onClick={() => setFilter("Disease")} className={`text-[10px] font-bold px-3 py-1 rounded-lg ${filter === 'Disease' ? 'bg-white text-black' : 'text-white/40'}`}>Disease</button>
-         </div>
-      </div>
-
-      {/* 📰 POSTS FEED */}
-      <div className="space-y-4">
-        {filteredPosts.map((post) => (
-          <div key={post.id} className="bg-[#0a0c10] p-5 rounded-[2rem] border border-white/5 hover:border-emerald-500/20 transition-all group animate-in slide-in-from-bottom-2">
-             
-             {/* Header */}
-             <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
-                   <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg shadow-lg ${post.role === 'Expert' ? 'bg-purple-600 text-white' : 'bg-gradient-to-br from-emerald-500 to-emerald-700 text-white'}`}>
-                      {post.user.charAt(0)}
-                   </div>
-                   <div className="text-right">
-                      <h3 className="font-bold text-sm text-white flex items-center gap-2">
-                         {post.user} 
-                         {post.role === 'Expert' && <span className="bg-purple-500 text-white text-[8px] px-2 py-0.5 rounded-md uppercase font-black tracking-wider">Expert</span>}
-                      </h3>
-                      <p className="text-[10px] text-white/40 uppercase tracking-wider">{post.time} • {post.category}</p>
-                   </div>
-                </div>
-                <button className="text-white/20 hover:text-white transition-colors"><Flag size={14} /></button>
-             </div>
-
-             {/* Content */}
-             <p className="text-white/90 text-sm leading-relaxed font-urdu mb-3 pr-2">
-                {post.content}
-             </p>
-
-             {/* Post Image */}
-             {post.image && (
-                <div className="mb-4 rounded-xl overflow-hidden border border-white/10">
-                   <img src={post.image} alt="Post Attachment" className="w-full h-48 object-cover" />
-                </div>
-             )}
-
-             {/* Interaction Bar */}
-             <div className="flex items-center gap-4 border-t border-white/5 pt-3 mt-2">
-                <button 
-                  onClick={() => toggleLike(post.id)}
-                  className={`flex items-center gap-2 text-xs font-bold transition-all px-3 py-1.5 rounded-lg ${post.isLiked ? 'text-rose-500 bg-rose-500/10' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
-                >
-                   <ThumbsUp size={16} className={post.isLiked ? "fill-current" : ""} /> {post.likes}
-                </button>
-                <button className="flex items-center gap-2 text-white/40 hover:text-blue-500 transition-colors text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-blue-500/10">
-                   <MessageSquare size={16} /> {post.comments} Reply
-                </button>
-                <button className="flex items-center gap-2 text-white/40 hover:text-green-500 transition-colors text-xs font-bold ml-auto">
-                   <Share2 size={16} />
-                </button>
-             </div>
-
+              <button 
+                onClick={handlePost}
+                disabled={!newPost}
+                className="bg-pink-600 hover:bg-pink-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-8 py-3 rounded-xl font-bold uppercase text-xs tracking-widest flex items-center gap-2 shadow-lg shadow-pink-900/40 transition-all active:scale-95"
+              >
+                  {t.postBtn} <Send size={16} className={language === 'ur' ? 'rotate-180' : ''} />
+              </button>
           </div>
-        ))}
-
-        {filteredPosts.length === 0 && (
-           <div className="text-center py-10 opacity-30">
-              <Filter size={40} className="mx-auto mb-2" />
-              <p className="text-sm">No posts found in this category</p>
-           </div>
-        )}
       </div>
 
+      {/* FILTERS & SEARCH */}
+      <div className="flex flex-col md:flex-row gap-4 mb-6 sticky top-4 z-10">
+          <div className={`flex-1 relative ${language === 'ur' ? 'md:order-2' : ''}`}>
+              <input 
+                type="text" 
+                placeholder={t.searchPlaceholder}
+                className={`w-full bg-[#1a1d24]/80 backdrop-blur-md border border-white/10 rounded-2xl py-4 px-12 text-white focus:border-pink-500 outline-none ${language === 'ur' ? 'font-urdu' : ''}`}
+              />
+              <Search className={`absolute top-1/2 -translate-y-1/2 text-white/30 ${language === 'ur' ? 'right-4' : 'left-4'}`} size={20} />
+          </div>
+          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+              {t.filters.map((filter, i) => (
+                  <button key={i} className={`px-6 py-4 rounded-2xl text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all ${i === 0 ? 'bg-pink-600 text-white shadow-lg shadow-pink-900/40' : 'bg-[#1a1d24] text-white/40 hover:bg-white/10'}`}>
+                      {filter}
+                  </button>
+              ))}
+          </div>
+      </div>
+
+      {/* POSTS FEED */}
+      <div className="space-y-6">
+          {posts.map(post => (
+              <div key={post.id} className="bg-[#0a0c10] p-6 rounded-[2.5rem] border border-white/5 hover:border-pink-500/20 transition-all group animate-in slide-in-from-bottom-4">
+                  <div className="flex justify-between items-start mb-4">
+                      <div className="flex gap-3">
+                          <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center font-bold text-white/50">{post.user[0]}</div>
+                          <div>
+                              <h3 className="font-bold text-white leading-tight">{post.user}</h3>
+                              <p className="text-white/30 text-[10px] uppercase font-bold tracking-wider">{post.role} • {post.time}</p>
+                          </div>
+                      </div>
+                      <button className="text-white/20 hover:text-white"><MoreHorizontal size={20} /></button>
+                  </div>
+                  
+                  <p className={`text-white/90 text-lg leading-relaxed mb-6 ${language === 'ur' ? 'font-urdu' : ''}`}>
+                      {language === 'ur' ? (post as any).content : (post as any).contentEn || post.content}
+                  </p>
+
+                  <div className="flex items-center gap-2 border-t border-white/5 pt-4">
+                      <ActionButton icon={Heart} label={t.like} count={post.likes} />
+                      <ActionButton icon={MessageSquare} label={t.comment} count={post.comments} />
+                      <div className="flex-1"></div>
+                      <ActionButton icon={Share2} label={t.share} />
+                  </div>
+              </div>
+          ))}
+      </div>
     </div>
   );
+}
+
+function ActionButton({ icon: Icon, label, count }: any) {
+    return (
+        <button className="flex items-center gap-2 py-2 px-4 rounded-xl hover:bg-white/5 text-white/40 hover:text-pink-400 transition-all group">
+            <Icon size={18} className="group-hover:scale-110 transition-transform" />
+            {count !== undefined && <span className="font-bold text-sm">{count}</span>}
+            <span className="text-[10px] font-bold uppercase hidden md:inline">{label}</span>
+        </button>
+    );
 }
