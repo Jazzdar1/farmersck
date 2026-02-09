@@ -5,7 +5,8 @@ const { HashRouter, Routes, Route, Link, useLocation, Navigate } = ReactRouterDO
 import { 
   LayoutDashboard, Menu, CloudSun, MessageCircle, User, 
   ScanEye, Syringe, Calendar, BarChart3, Settings, 
-  Users, Wallet, Sprout, BookOpen, MapPinned, ChevronRight
+  Users, Wallet, Sprout, BookOpen, MapPinned, ChevronRight,
+  Youtube // ✅ Youtube Icon Added
 } from 'lucide-react';
 
 // Pages Import
@@ -33,6 +34,7 @@ import AdminLogin from './pages/AdminLogin';
 import Admin from './pages/Admin';
 import FarmerLogin from './pages/FarmerLogin';
 import Footer from './components/Footer';
+import SocialMedia from './pages/SocialMedia'; // ✅ Social Page Added
 
 export default function App() {
   return (
@@ -83,6 +85,9 @@ function AppContent() {
             </NavGroup>
 
             <NavGroup title="Community | کمیونٹی">
+              {/* ✅ Social Media Link Added Below */}
+              <NavLink to="/social" icon={Youtube} en="Social Hub" ur="سوشل میڈیا" gradient="from-red-600 to-rose-800" shadow="shadow-red-500/30" active={location.pathname === '/social'} onClick={() => setIsOpen(false)} />
+              
               <NavLink to="/forum" icon={Users} en="Forum" ur="فورم" gradient="from-fuchsia-500 to-pink-700" shadow="shadow-fuchsia-500/30" active={location.pathname === '/forum'} onClick={() => setIsOpen(false)} />
               <NavLink to="/admin" icon={Settings} en="Admin" ur="ایڈمن" gradient="from-slate-500 to-slate-700" shadow="shadow-slate-500/30" active={location.pathname === '/admin'} onClick={() => setIsOpen(false)} />
             </NavGroup>
@@ -122,6 +127,10 @@ function AppContent() {
             <Route path="/admin-login" element={<AdminLogin />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfUse />} />
+            
+            {/* ✅ Social Media Route Added */}
+            <Route path="/social" element={<SocialMedia />} />
+
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
