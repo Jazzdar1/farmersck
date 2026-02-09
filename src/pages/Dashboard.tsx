@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Sun, Moon, Star, Sprout, Lock, Layout, 
-  LogIn, Megaphone, X 
+  LogIn, Megaphone, X, BellRing
 } from 'lucide-react';
 import RotatingLogo from '../components/RotatingLogo';
 import { DashboardTile, DEFAULT_MAIN_TILES, ICON_MAP } from '../utils/tileHelpers';
+import { ADMIN_USERNAME } from "../config"; // ✅ Need this to find the public alerts
 
 // Dual Language Greetings
 const GREETINGS = [
@@ -18,7 +19,7 @@ const WISDOM_POOL = [
 export default function Dashboard() {
   const navigate = useNavigate();
   const [theme, setTheme] = useState<'standard' | 'high-contrast'>((localStorage.getItem('fck_theme') as any) || 'standard');
-  const [tiles, setTiles] = useState<DashboardTile[]>([]); 
+  const [tiles, setTiles] = useState<DashboardTile[]>(DEFAULT_MAIN_TILES); // Default to hardcoded tiles first
   const [currentQuote, setCurrentQuote] = useState(WISDOM_POOL[0]);
   const [currentGreet, setCurrentGreet] = useState(GREETINGS[0]);
   const [user, setUser] = useState<any>(null);
@@ -28,111 +29,160 @@ export default function Dashboard() {
     const initDashboard = async () => {
         try {
             const puter = (window as any).puter;
+            
+            // 1. AUTH (Only if needed for user info)
             if (puter?.auth) {
                 try {
                     const pUser = await puter.auth.getUser();
-                    if (pUser) setUser(pUser);
-                } catch (err) {}
+                    setUser(pUser);
+                } catch(e) {}
             }
-            
-            let data = DEFAULT_MAIN_TILES;
-            if (puter?.kv) {
-                const saved = await puter.kv.get('fck_main_tiles');
-                if (saved) data = JSON.parse(saved);
-            }
-            setTiles(data.filter(t => t.isActive));
 
-            if (puter?.kv) {
-                const news = await puter.kv.get('fck_flash_news');
-                if (news) setFlashNews(JSON.parse(news));
+            // 2. FETCH PUBLIC ALERTS (Works for everyone)
+            try {
+                // Fetching from the public website folder
+                const res = await fetch(`https://${ADMIN_USERNAME}.puter.site/alerts.json?t=${Date.now()}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setFlashNews(data);
+                }
+            } catch(e) {
+                console.log("No alerts found");
             }
-        } catch (error) {}
+
+            // 3. FETCH CUSTOM TILES (Optional, if you changed them in admin)
+            try {
+                // Try public tiles file too if you want dynamic tiles
+                // For now, sticking to Default Tiles as requested
+            } catch(e) {}
+
+        } catch (err) { console.error(err); }
     };
     initDashboard();
   }, []);
 
-  const handleToolClick = (path: string, isProtected: boolean = false) => {
-    if (isProtected && !user) navigate('/farmer-login');
-    else navigate(path);
+  const handleTileClick = (link: string, isLocked?: boolean) => {
+    if (isLocked && !user) {
+      alert("Please Login to access this feature.\nاس فیچر کے لیے لاگ ان ضروری ہے۔");
+      navigate('/farmer-login');
+    } else {
+      navigate(link);
+    }
   };
 
   return (
-    <div className={`p-4 md:p-10 space-y-8 text-right min-h-screen transition-all duration-500 ${theme === 'high-contrast' ? 'bg-black text-yellow-400' : 'bg-[#050505] text-white'}`} dir="rtl">
+    <div className={`min-h-screen p-4 md:p-6 pb-24 font-sans transition-colors duration-500 ${theme === 'high-contrast' ? 'bg-black text-yellow-400' : 'bg-[#020408] text-white'}`}>
       
-      {/* FLASH NEWS */}
+      {/* HEADER SECTION */}
+      <div className="flex justify-between items-start mb-8 animate-in slide-in-from-top duration-700">
+        <div className="flex gap-4 items-center">
+          <RotatingLogo />
+          <div>
+            <h1 className={`text-3xl md:text-4xl font-black tracking-tighter uppercase leading-none ${theme === 'high-contrast' ? 'text-yellow-400' : 'text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400'}`}>
+              FC KASHMIR
+            </h1>
+            <p className={`text-sm font-bold font-urdu mt-1 ${theme === 'high-contrast' ? 'text-white' : 'text-emerald-600'}`}>
+              جدید زراعت، خوشحال کسان
+            </p>
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+           {/* Alerts Bell */}
+           <div className="relative">
+              <button className="p-3 bg-white/5 rounded-2xl">
+                 <BellRing size={20} className={flashNews.length > 0 ? "text-rose-500 animate-swing" : "text-white/50"} />
+              </button>
+              {flashNews.length > 0 && <span className="absolute top-0 right-0 w-3 h-3 bg-rose-500 rounded-full animate-ping"></span>}
+           </div>
+
+           {!user ? (
+             <button onClick={() => navigate('/farmer-login')} className="flex items-center gap-2 px-4 py-3 bg-white/5 rounded-2xl border border-white/10 hover:bg-white/10 transition-all">
+                <LogIn size={18} /> <span className="hidden md:inline text-xs font-bold uppercase">Login</span>
+             </button>
+           ) : (
+             <div className="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center font-bold text-white border border-white/10 shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+               {user.username.substring(0,2).toUpperCase()}
+             </div>
+           )}
+        </div>
+      </div>
+
+      {/* 🔴 FLASH NEWS TICKER (Only shows if there are alerts) */}
       {flashNews.length > 0 && (
-          <div className="space-y-2 animate-in slide-in-from-top-4">
-              {flashNews.map((news) => (
-                  <div key={news.id} className={`p-4 rounded-[1.5rem] flex items-center justify-between shadow-xl ${news.type === 'Critical' ? 'bg-gradient-to-r from-rose-600 to-red-700' : 'bg-gradient-to-r from-blue-600 to-indigo-700'} text-white`}>
-                      <button onClick={() => setFlashNews(flashNews.filter(n => n.id !== news.id))} className="opacity-60 hover:opacity-100 p-2"><X size={18}/></button>
-                      <div className="text-right flex-1 mr-4">
-                          <p className="font-black uppercase text-[10px] tracking-widest flex items-center justify-end gap-2 mb-1 opacity-80">
-                              {news.title} <Megaphone size={14} className="animate-bounce" />
-                          </p>
-                          <p className="text-sm font-bold font-urdu leading-tight">{news.message}</p>
-                      </div>
-                  </div>
-              ))}
+          <div className="mb-8 bg-gradient-to-r from-rose-900/40 to-red-900/40 border border-rose-500/30 p-1 rounded-2xl overflow-hidden shadow-lg shadow-rose-900/20 relative animate-in fade-in">
+              <div className="absolute left-0 top-0 bottom-0 bg-rose-600 px-3 z-10 flex items-center justify-center">
+                  <Megaphone size={18} className="text-white animate-pulse" />
+              </div>
+              <div className="py-2 pl-12 pr-4 overflow-hidden">
+                   <div className="whitespace-nowrap animate-marquee flex items-center">
+                       {flashNews.map((n, i) => (
+                           <span key={i} className="text-white font-bold mx-8 inline-flex items-center gap-2 text-sm">
+                               <span className={`px-2 py-0.5 rounded text-[10px] uppercase tracking-widest ${n.type==='Warning'?'bg-rose-500':'bg-blue-500'}`}>{n.type || 'NEWS'}</span> 
+                               <span className="text-white/90">{n.title}:</span>
+                               <span className="font-urdu font-normal text-emerald-300">{n.message}</span>
+                           </span>
+                       ))}
+                   </div>
+              </div>
           </div>
       )}
 
-      {/* TOP BAR */}
-      <div className="flex justify-between items-center bg-white/5 backdrop-blur-xl p-4 rounded-[2rem] border border-white/10 shadow-2xl">
-        <div className="flex items-center gap-4">
-          <RotatingLogo size="sm" />
-          <div className="text-left border-l border-white/10 pl-4">
-            {user ? (
-                <div><p className="text-[9px] font-black uppercase text-emerald-500 tracking-widest flex items-center gap-1"><span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> ONLINE</p><p className="font-bold text-white text-sm">{user.username}</p></div>
-            ) : (
-                <div className="flex flex-col"><p className="text-[9px] font-black uppercase text-white/40 tracking-widest">GUEST MODE</p><button onClick={() => navigate('/farmer-login')} className="text-xs font-bold text-emerald-400 hover:text-white transition-colors flex items-center gap-1">Login Now <LogIn size={12} /></button></div>
-            )}
-          </div>
-        </div>
-        <button onClick={() => setTheme(theme === 'standard' ? 'high-contrast' : 'standard')} className="p-3 bg-white/10 rounded-2xl text-emerald-400 active:scale-90 transition-all hover:bg-white/20">
-          {theme === 'standard' ? <Moon size={20} /> : <Sun size={20} />}
-        </button>
+      {/* GREETING CARD */}
+      <div className="mb-8 p-6 rounded-[2.5rem] bg-gradient-to-br from-emerald-900/20 to-black border border-emerald-500/20 relative overflow-hidden group">
+         <div className="absolute -right-10 -top-10 opacity-10 group-hover:opacity-20 transition-opacity duration-700">
+            <Sprout size={150} />
+         </div>
+         <h2 className="text-2xl font-urdu font-bold text-white mb-1">{currentGreet.ur}</h2>
+         <p className="text-xs uppercase tracking-widest text-emerald-500 font-bold mb-4">{currentGreet.en}</p>
+         <div className="h-px w-20 bg-emerald-500/50 mb-4"></div>
+         <p className="text-lg font-urdu text-white/80 leading-relaxed">"{currentQuote.ur}"</p>
+         <p className="text-[10px] text-white/40 mt-1 italic">{currentQuote.en}</p>
       </div>
 
-      {/* HERO SECTION */}
-      <div className="bg-gradient-to-br from-emerald-900 to-slate-950 p-8 md:p-12 rounded-[3rem] border border-emerald-500/20 shadow-2xl relative overflow-hidden group">
-         <div className="relative z-10 space-y-4">
-          <div className="flex items-center gap-2 text-emerald-400"><Star size={14} fill="currentColor" /><span className="text-sm font-bold tracking-wide uppercase">{currentGreet.en}</span></div>
-          <h2 className="text-3xl md:text-5xl font-black font-nastaleeq text-white leading-tight">{user ? `${user.username} صاحب!` : 'محترم کسان دوست!'}</h2>
-          <div className="my-6 border-r-4 border-emerald-500 pr-6">
-              <p className="text-2xl md:text-3xl text-white/90 leading-[1.8] font-nastaleeq italic">"{currentQuote.ur}"</p>
-              <p className="text-sm text-white/50 mt-2 italic">{currentQuote.en}</p>
-          </div>
-        </div>
-        <Sprout className="absolute -right-10 -bottom-10 text-emerald-500/5 group-hover:rotate-12 transition-transform duration-700" size={300} />
-      </div>
-
-      {/* BILINGUAL TILES GRID */}
-      <h3 className="text-white/40 font-bold text-sm uppercase tracking-widest pr-2">Quick Access | فوری رسائی</h3>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-5 pb-20">
-        {tiles.map(tile => {
+      {/* TILES GRID */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {tiles.filter(t => t.isActive).map((tile, index) => {
             const IconComp = ICON_MAP[tile.icon] || Layout;
-            const isLocked = tile.isLocked && !user;
-            const gradientClass = tile.gradient ? `bg-gradient-to-br ${tile.gradient}` : 'bg-gray-800';
-
+            // Determine styles based on theme
+            const gradientClass = theme === 'high-contrast' 
+                ? 'bg-black border-2 border-yellow-400' 
+                : `bg-gradient-to-br ${tile.gradient}`;
+            
             return (
-                <div key={tile.id} onClick={() => handleToolClick(tile.link, tile.isLocked)} className={`${gradientClass} p-6 rounded-[2.5rem] relative overflow-hidden h-[200px] flex flex-col justify-between cursor-pointer hover:scale-[1.02] active:scale-95 transition-all duration-300 group shadow-xl ${tile.shadow || ''}`}>
+                <div 
+                  key={tile.id} 
+                  onClick={() => handleTileClick(tile.link, tile.isLocked)} 
+                  className={`${gradientClass} p-6 rounded-[2.5rem] relative overflow-hidden h-[200px] flex flex-col justify-between cursor-pointer hover:scale-[1.02] active:scale-95 transition-all duration-300 group shadow-xl ${tile.shadow || ''}`}
+                >
                   <IconComp className="absolute -right-4 -bottom-4 text-white/10 group-hover:scale-125 transition-transform duration-500 rotate-12" size={120} />
+                  
+                  {/* Lock Icon */}
                   {(tile.isLocked && !user) && <Lock size={16} className="absolute top-6 left-6 text-white/60 bg-black/20 p-1 rounded-md" />}
                   
                   {/* Icon */}
-                  <div className="bg-white/20 backdrop-blur-md w-12 h-12 rounded-2xl flex items-center justify-center border border-white/20 shadow-lg group-hover:rotate-6 transition-transform"><IconComp size={24} className="text-white drop-shadow-md" /></div>
+                  <div className="bg-white/20 backdrop-blur-md w-12 h-12 rounded-2xl flex items-center justify-center border border-white/20 shadow-lg group-hover:rotate-6 transition-transform">
+                      <IconComp size={24} className="text-white drop-shadow-md" />
+                  </div>
                   
                   {/* Text Container */}
                   <div className="relative z-10">
-                      {/* URDU Label (Main) */}
                       <h3 className="font-black font-urdu text-xl text-white leading-tight drop-shadow-md mb-1">{tile.label}</h3>
-                      {/* ENGLISH Sub (Secondary but clear) */}
-                      <p className="text-[10px] font-black uppercase tracking-[0.15em] text-white/70 bg-black/20 inline-block px-2 py-1 rounded">{tile.sub}</p>
+                      <p className="text-[10px] font-black uppercase tracking-[0.15em] text-white/70 bg-black/20 inline-block px-2 py-1 rounded-lg backdrop-blur-sm group-hover:bg-white/20 transition-colors">
+                        {tile.sub}
+                      </p>
                   </div>
                 </div>
             );
         })}
       </div>
+
+      <style>{`
+        .animate-marquee { animation: marquee 15s linear infinite; }
+        @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+        .animate-swing { animation: swing 1s ease-in-out infinite; }
+        @keyframes swing { 0%,100%{transform:rotate(0deg)} 20%{transform:rotate(15deg)} 40%{transform:rotate(-10deg)} 60%{transform:rotate(5deg)} 80%{transform:rotate(-5deg)} }
+      `}</style>
     </div>
   );
 }

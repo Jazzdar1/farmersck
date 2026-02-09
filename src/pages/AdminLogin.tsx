@@ -16,7 +16,6 @@ export default function AdminLogin() {
       if (user) {
         // 2. SECURITY CHECK
         if (user.username === ADMIN_USERNAME) {
-           // ✅ FIXED: Redirect to '/admin' instead of '/admin-dashboard'
            navigate("/admin");
         } else {
            alert(`ACCESS DENIED! User '${user.username}' is not an Admin.`);
@@ -34,10 +33,9 @@ export default function AdminLogin() {
   return (
     <div className="min-h-screen bg-[#020408] flex items-center justify-center p-6 relative overflow-hidden font-sans">
       {/* Background Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-red-900/10 blur-[120px] pointer-events-none"></div>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-red-900/20 rounded-full blur-[100px] pointer-events-none"></div>
 
-      <div className="w-full max-w-md bg-[#0a0c10] border border-white/5 rounded-[3rem] p-10 text-center shadow-2xl relative z-10">
-        
+      <div className="w-full max-w-sm bg-[#0a0c10] border border-white/10 p-8 rounded-[3rem] shadow-2xl relative z-10 text-center">
         <button 
           onClick={() => navigate('/')} 
           className="absolute top-6 left-6 p-3 bg-white/5 rounded-2xl text-white/40 hover:text-white hover:bg-white/10 transition-all"
@@ -55,15 +53,16 @@ export default function AdminLogin() {
         <button 
           onClick={handleLogin}
           disabled={loading}
-          className="w-full py-5 bg-gradient-to-r from-red-600 to-rose-700 text-white rounded-[2rem] font-black uppercase text-xs flex items-center justify-center gap-4 hover:scale-[1.02] transition-all active:scale-95 shadow-xl shadow-red-900/30 disabled:opacity-50 disabled:cursor-not-allowed border-t border-white/20"
+          className="w-full py-5 bg-gradient-to-r from-red-600 to-rose-700 text-white rounded-[2rem] font-black uppercase text-xs flex items-center justify-center gap-4 hover:scale-[1.02] transition-all active:scale-95 shadow-xl shadow-red-900/30 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? <Loader2 className="animate-spin" /> : <ShieldCheck size={20} />}
-          Secure Login
+          {loading ? <Loader2 className="animate-spin" size={20}/> : <ShieldCheck size={20} />}
+          {loading ? "Verifying..." : "Secure Access"}
         </button>
-        
-        <p className="mt-6 text-red-500/50 text-[10px] flex items-center justify-center gap-2 uppercase tracking-wide">
-           <AlertTriangle size={12} /> Restricted Access Area
-        </p>
+
+        <div className="mt-8 flex items-center justify-center gap-2 text-white/20">
+            <AlertTriangle size={12} />
+            <p className="text-[10px] uppercase tracking-widest">Restricted Area</p>
+        </div>
       </div>
     </div>
   );

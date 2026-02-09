@@ -5,11 +5,10 @@ const { HashRouter, Routes, Route, Link, useLocation, Navigate } = ReactRouterDO
 import { 
   LayoutDashboard, Menu, CloudSun, MessageCircle, User, 
   ScanEye, Syringe, Calendar, BarChart3, Settings, 
-  Users, Wallet, Sprout, BookOpen, MapPinned, ChevronRight,
-  Youtube // ✅ Youtube Icon Added
+  Users, Wallet, Sprout, BookOpen, MapPinned, ChevronRight, Youtube
 } from 'lucide-react';
 
-// Pages Import
+// Pages
 import Dashboard from './pages/Dashboard';
 import ExpertChat from './pages/ExpertChat';
 import KnowledgeHub from './pages/KnowledgeHub';
@@ -34,7 +33,7 @@ import AdminLogin from './pages/AdminLogin';
 import Admin from './pages/Admin';
 import FarmerLogin from './pages/FarmerLogin';
 import Footer from './components/Footer';
-import SocialMedia from './pages/SocialMedia'; // ✅ Social Page Added
+import SocialMedia from './pages/SocialMedia'; // ✅ Added
 
 export default function App() {
   return (
@@ -50,18 +49,11 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-[#020408] text-white flex flex-col lg:flex-row font-sans">
-      
-      {/* 🌍 BILINGUAL SIDEBAR */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-80 bg-[#050608] border-r border-white/5 transition-transform lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'} overflow-y-auto no-scrollbar shadow-2xl`}>
         <div className="p-5 flex flex-col min-h-full">
-          
-          {/* Brand Header */}
           <div className="flex items-center gap-4 mb-8 shrink-0 bg-[#0a0c10] p-4 rounded-3xl border border-white/5 shadow-inner">
             <div className="w-14 h-14 bg-gradient-to-br from-emerald-400 to-green-700 rounded-2xl flex items-center justify-center font-black text-white text-2xl shadow-lg shadow-emerald-500/20 border-t border-white/20">FC</div>
-            <div>
-               <h1 className="font-black text-xl tracking-tighter uppercase text-white leading-none">FC KASHMIR</h1>
-               <p className="text-[12px] text-emerald-500 font-bold font-urdu mt-1">کشمیر کسان پورٹل</p>
-            </div>
+            <div><h1 className="font-black text-xl tracking-tighter uppercase text-white leading-none">FC KASHMIR</h1><p className="text-[12px] text-emerald-500 font-bold font-urdu mt-1">کشمیر کسان پورٹل</p></div>
           </div>
 
           <nav className="flex-1 space-y-8 pb-10">
@@ -85,9 +77,7 @@ function AppContent() {
             </NavGroup>
 
             <NavGroup title="Community | کمیونٹی">
-              {/* ✅ Social Media Link Added Below */}
-              <NavLink to="/social" icon={Youtube} en="Social Hub" ur="سوشل میڈیا" gradient="from-red-600 to-rose-800" shadow="shadow-red-500/30" active={location.pathname === '/social'} onClick={() => setIsOpen(false)} />
-              
+              <NavLink to="/social" icon={Youtube} en="Social Hub" ur="سوشل میڈیا" gradient="from-red-600 to-pink-700" shadow="shadow-red-500/30" active={location.pathname === '/social'} onClick={() => setIsOpen(false)} />
               <NavLink to="/forum" icon={Users} en="Forum" ur="فورم" gradient="from-fuchsia-500 to-pink-700" shadow="shadow-fuchsia-500/30" active={location.pathname === '/forum'} onClick={() => setIsOpen(false)} />
               <NavLink to="/admin" icon={Settings} en="Admin" ur="ایڈمن" gradient="from-slate-500 to-slate-700" shadow="shadow-slate-500/30" active={location.pathname === '/admin'} onClick={() => setIsOpen(false)} />
             </NavGroup>
@@ -127,10 +117,7 @@ function AppContent() {
             <Route path="/admin-login" element={<AdminLogin />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfUse />} />
-            
-            {/* ✅ Social Media Route Added */}
             <Route path="/social" element={<SocialMedia />} />
-
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
@@ -141,33 +128,11 @@ function AppContent() {
   );
 }
 
-// ✨ BILINGUAL NAVLINK
 function NavLink({ to, icon: Icon, en, ur, active, onClick, gradient, shadow }: any) {
   return (
-    <Link 
-      to={to} 
-      onClick={onClick} 
-      className={`relative flex items-center gap-4 px-4 py-4 rounded-2xl transition-all duration-300 mb-3 group border ${
-        active 
-        ? `bg-gradient-to-br ${gradient} border-t-white/30 border-b-black/20 translate-x-2 ${shadow} shadow-lg scale-105` 
-        : `bg-[#0f1216] border-white/5 hover:border-white/10 hover:bg-[#1a1d24] text-white/50 hover:text-white`
-      }`}
-    >
-      {/* Icon Box */}
-      <div className={`p-3 rounded-xl shrink-0 transition-all ${active ? 'bg-white/20 text-white backdrop-blur-sm shadow-sm' : 'bg-black/20 group-hover:bg-white/10'}`}>
-         <Icon size={22} />
-      </div>
-
-      {/* Text Area (Bilingual Stack) */}
-      <div className="flex flex-col flex-1">
-          <span className={`text-[10px] font-black uppercase tracking-[0.15em] leading-none mb-1 ${active ? 'text-white/80' : 'text-white/40 group-hover:text-white/60'}`}>
-            {en}
-          </span>
-          <span className={`text-lg font-bold font-urdu leading-none ${active ? 'text-white drop-shadow-md' : 'text-white/80 group-hover:text-white'}`}>
-            {ur}
-          </span>
-      </div>
-      
+    <Link to={to} onClick={onClick} className={`relative flex items-center gap-4 px-4 py-4 rounded-2xl transition-all duration-300 mb-3 group border ${active ? `bg-gradient-to-br ${gradient} border-t-white/30 border-b-black/20 translate-x-2 ${shadow} shadow-lg scale-105` : `bg-[#0f1216] border-white/5 hover:border-white/10 hover:bg-[#1a1d24] text-white/50 hover:text-white`}`}>
+      <div className={`p-3 rounded-xl shrink-0 transition-all ${active ? 'bg-white/20 text-white backdrop-blur-sm shadow-sm' : 'bg-black/20 group-hover:bg-white/10'}`}><Icon size={22} /></div>
+      <div className="flex flex-col flex-1"><span className={`text-[10px] font-black uppercase tracking-[0.15em] leading-none mb-1 ${active ? 'text-white/80' : 'text-white/40 group-hover:text-white/60'}`}>{en}</span><span className={`text-lg font-bold font-urdu leading-none ${active ? 'text-white drop-shadow-md' : 'text-white/80 group-hover:text-white'}`}>{ur}</span></div>
       {active && <ChevronRight size={16} className="text-white/80 animate-pulse" />}
     </Link>
   );
@@ -175,9 +140,6 @@ function NavLink({ to, icon: Icon, en, ur, active, onClick, gradient, shadow }: 
 
 function NavGroup({ title, children }: any) {
   return (
-    <div className="space-y-1">
-      <p className="text-[9px] font-black uppercase text-white/20 px-4 tracking-[0.2em] mb-3 border-b border-white/5 pb-2 mx-4">{title}</p>
-      {children}
-    </div>
+    <div className="space-y-1"><p className="text-[9px] font-black uppercase text-white/20 px-4 tracking-[0.2em] mb-3 border-b border-white/5 pb-2 mx-4">{title}</p>{children}</div>
   );
 }
