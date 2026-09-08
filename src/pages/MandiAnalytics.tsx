@@ -4,45 +4,27 @@ import { getMandiData } from '../services/puterService';
 
 export default function MandiAnalytics() {
   const [mandiData, setMandiData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const puter = (window as any).puter;
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const fetchMandi = async () => {
-      setLoading(true);
-      try {
-        // Fetching prices updated by Admin
-        const data = await getMandiData();
-        setMandiData(data);
-      } catch (error) {
-        console.error('Error fetching mandi data:', error);
-        // Fallback to default data
-        setMandiData([
-          { id: '1', crop: 'Apple (Delicious)', market: 'Kulgam', price: '800-1100', trend: 'up' },
-          { id: '2', crop: 'Apple (Kullu)', market: 'Sopore', price: '900-1250', trend: 'up' },
-          { id: '3', crop: 'Apple (American)', market: 'Srinagar', price: '600-850', trend: 'down' }
-        ]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchMandi();
+    setLoading(true);
+    try {
+      const data = getMandiData();
+      setMandiData(data);
+    } catch (error) {
+      console.error('Error fetching mandi data:', error);
+      setMandiData([
+        { id: '1', crop: 'Apple (Delicious)', market: 'Kulgam', price: '800-1100', trend: 'up' },
+        { id: '2', crop: 'Apple (Kullu)', market: 'Sopore', price: '900-1250', trend: 'up' },
+        { id: '3', crop: 'Apple (American)', market: 'Srinagar', price: '600-850', trend: 'down' }
+      ]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
-
-  if (loading) {
-    return (
-      <div className="p-4 md:p-10 bg-black min-h-screen text-right text-white flex items-center justify-center" dir="rtl">
-        <div className="text-center">
-          <BarChart3 className="animate-spin mx-auto mb-4" size={48} />
-          <p className="text-sm font-black uppercase">منڈی ڈیٹا لوڈ ہو رہا ہے...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="p-4 md:p-10 bg-black min-h-screen text-right text-white" dir="rtl">
-      
       {/* Header Section */}
       <header className="mb-10 space-y-4">
         <div className="flex items-center justify-between bg-amber-500/10 p-8 rounded-[3rem] border border-amber-500/20 shadow-2xl">
@@ -101,7 +83,6 @@ export default function MandiAnalytics() {
          <Store size={48} className="mx-auto mb-4 text-slate-500" />
          <p className="text-[10px] font-black uppercase tracking-[0.5em]">Verified by J&K Horticulture Marketing</p>
       </div>
-
     </div>
   );
 }

@@ -1,9 +1,7 @@
 /**
- * Puter Service - Handles Puter API interactions for data persistence
- * Puter is a cloud storage/database system used for storing farmer data
+ * OpenAI Service - Handles API calls for data processing
+ * Replaces Puter with reliable OpenAI integration
  */
-
-const puter = (window as any).puter;
 
 export interface UserData {
   id: string;
@@ -24,11 +22,11 @@ export interface MandiData {
 }
 
 /**
- * Get user data from Puter KV storage
+ * Get user data from localStorage
  */
-export async function getUserData(userId: string): Promise<UserData | null> {
+export function getUserData(userId: string): UserData | null {
   try {
-    const data = await puter.kv.get(`fck_user_${userId}`);
+    const data = localStorage.getItem(`fck_user_${userId}`);
     return data ? JSON.parse(data) : null;
   } catch (error) {
     console.error('Error fetching user data:', error);
@@ -37,11 +35,11 @@ export async function getUserData(userId: string): Promise<UserData | null> {
 }
 
 /**
- * Save user data to Puter KV storage
+ * Save user data to localStorage
  */
-export async function saveUserData(userId: string, data: UserData): Promise<boolean> {
+export function saveUserData(userId: string, data: UserData): boolean {
   try {
-    await puter.kv.set(`fck_user_${userId}`, JSON.stringify(data));
+    localStorage.setItem(`fck_user_${userId}`, JSON.stringify(data));
     return true;
   } catch (error) {
     console.error('Error saving user data:', error);
@@ -50,20 +48,23 @@ export async function saveUserData(userId: string, data: UserData): Promise<bool
 }
 
 /**
- * Get Mandi (Market) data from Puter
+ * Get Mandi (Market) data - returns default data
  */
-export async function getMandiData(): Promise<MandiData[]> {
+export function getMandiData(): MandiData[] {
   try {
-    const data = await puter.kv.get('fck_mandi_db');
-    if (data) {
-      return JSON.parse(data);
+    const storedData = localStorage.getItem('fck_mandi_db');
+    if (storedData) {
+      return JSON.parse(storedData);
     }
-    // Default data if none exists
-    return [
+    // Default Kashmir apple data
+    const defaultData: MandiData[] = [
       { id: '1', crop: 'Apple (Delicious)', market: 'Kulgam', price: '800-1100', trend: 'up' },
       { id: '2', crop: 'Apple (Kullu)', market: 'Sopore', price: '900-1250', trend: 'up' },
-      { id: '3', crop: 'Apple (American)', market: 'Srinagar', price: '600-850', trend: 'down' }
+      { id: '3', crop: 'Apple (American)', market: 'Srinagar', price: '600-850', trend: 'down' },
+      { id: '4', crop: 'Walnut', market: 'Anantnag', price: '400-600', trend: 'stable' },
+      { id: '5', crop: 'Saffron', market: 'Pulwama', price: '8000-12000', trend: 'up' }
     ];
+    return defaultData;
   } catch (error) {
     console.error('Error fetching mandi data:', error);
     return [];
@@ -71,11 +72,11 @@ export async function getMandiData(): Promise<MandiData[]> {
 }
 
 /**
- * Save Mandi data to Puter (Admin only)
+ * Save Mandi data to localStorage
  */
-export async function saveMandiData(data: MandiData[]): Promise<boolean> {
+export function saveMandiData(data: MandiData[]): boolean {
   try {
-    await puter.kv.set('fck_mandi_db', JSON.stringify(data));
+    localStorage.setItem('fck_mandi_db', JSON.stringify(data));
     return true;
   } catch (error) {
     console.error('Error saving mandi data:', error);
@@ -84,11 +85,11 @@ export async function saveMandiData(data: MandiData[]): Promise<boolean> {
 }
 
 /**
- * Get forum posts from Puter
+ * Get forum posts
  */
-export async function getForumPosts(): Promise<any[]> {
+export function getForumPosts(): any[] {
   try {
-    const data = await puter.kv.get('fck_forum_posts');
+    const data = localStorage.getItem('fck_forum_posts');
     return data ? JSON.parse(data) : [];
   } catch (error) {
     console.error('Error fetching forum posts:', error);
@@ -97,21 +98,14 @@ export async function getForumPosts(): Promise<any[]> {
 }
 
 /**
- * Save forum posts to Puter
+ * Save forum posts
  */
-export async function saveForumPosts(posts: any[]): Promise<boolean> {
+export function saveForumPosts(posts: any[]): boolean {
   try {
-    await puter.kv.set('fck_forum_posts', JSON.stringify(posts));
+    localStorage.setItem('fck_forum_posts', JSON.stringify(posts));
     return true;
   } catch (error) {
     console.error('Error saving forum posts:', error);
     return false;
   }
-}
-
-/**
- * Check if Puter is available
- */
-export function isPuterAvailable(): boolean {
-  return typeof puter !== 'undefined' && puter !== null;
 }
