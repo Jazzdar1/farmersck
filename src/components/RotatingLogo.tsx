@@ -1,42 +1,33 @@
-
 import React from 'react';
-import { Leaf } from 'lucide-react';
+import { Sprout } from 'lucide-react';
 
-const RotatingLogo: React.FC<{ size?: 'sm' | 'lg' }> = ({ size = 'lg' }) => {
-  const dim = size === 'lg' ? 'w-12 h-12' : 'w-8 h-8';
-  const iconDim = size === 'lg' ? 'w-7 h-7' : 'w-4 h-4';
+interface RotatingLogoProps {
+  size?: 'sm' | 'md' | 'lg';
+  animated?: boolean;
+}
 
-  return (
-    <div className="relative group perspective-1000">
-      <div className={`relative ${dim} transform-style-3d animate-news-rotate`}>
-        {/* Front Face */}
-        <div className={`absolute inset-0 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg backface-hidden border-2 border-emerald-400`}>
-          <Leaf className={`${iconDim} text-white`} />
-        </div>
-        {/* Back Face */}
-        <div className={`absolute inset-0 bg-slate-900 rounded-xl flex items-center justify-center shadow-lg backface-hidden border-2 border-slate-700 transform rotateY-180`}>
-          <span className="text-[10px] font-black text-emerald-500 uppercase">FCK</span>
-        </div>
-      </div>
-      <style>{`
-        .perspective-1000 { perspective: 1000px; }
-        .transform-style-3d { transform-style: preserve-3d; }
-        .backface-hidden { backface-visibility: hidden; }
-        .rotateY-180 { transform: rotateY(180deg); }
-        @keyframes news-rotate {
-          0% { transform: rotateY(0deg); }
-          20% { transform: rotateY(0deg); }
-          45% { transform: rotateY(180deg); }
-          70% { transform: rotateY(180deg); }
-          95% { transform: rotateY(360deg); }
-          100% { transform: rotateY(360deg); }
-        }
-        .animate-news-rotate {
-          animation: news-rotate 6s infinite ease-in-out;
-        }
-      `}</style>
-    </div>
-  );
+const sizeMap = {
+  sm: 'w-10 h-10',
+  md: 'w-16 h-16',
+  lg: 'w-24 h-24'
 };
 
-export default RotatingLogo;
+const iconSizeMap = {
+  sm: 28,
+  md: 48,
+  lg: 64
+};
+
+export default function RotatingLogo({ size = 'md', animated = true }: RotatingLogoProps) {
+  return (
+    <div
+      className={`${sizeMap[size]} bg-gradient-to-br from-emerald-400 to-green-700 rounded-2xl flex items-center justify-center font-black text-white shadow-lg shadow-emerald-500/20 border border-emerald-300/30 ${animated ? 'animate-spin' : ''}`}
+      style={{
+        animationDuration: animated ? '8s' : 'none',
+        animationDirection: 'reverse'
+      }}
+    >
+      <Sprout size={iconSizeMap[size]} className="text-white" />
+    </div>
+  );
+}

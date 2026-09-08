@@ -1,77 +1,117 @@
-import { DiseaseAnalysis } from '../types';
+/**
+ * Puter Service - Handles Puter API interactions for data persistence
+ * Puter is a cloud storage/database system used for storing farmer data
+ */
 
-// ⚡ FAST AI SERVICE (Using GPT-4o-Mini for Speed)
-export const askAI = async (prompt: string, isUrdu: boolean = true) => {
-    try {
-        const systemPrompt = isUrdu 
-            ? "You are an expert agriculture consultant for Kashmir named 'Maher'. Reply in short, clear Urdu (Urdu script). Keep answers under 3 lines for speed." 
-            : "You are an expert agriculture consultant for Kashmir. Keep answers short and concise.";
-            
-        // Using 'gpt-4o-mini' because it is much faster than Gemini for text
-        const response = await (window as any).puter.ai.chat(`${systemPrompt} ${prompt}`, {
-            model: 'gpt-4o-mini' 
-        });
+const puter = (window as any).puter;
 
-        let content = response.message.content;
-        
-        // Cleanup formatting if any
-        if (content.includes('```')) {
-            content = content.replace(/```json/g, '').replace(/```/g, '').trim();
-        }
+export interface UserData {
+  id: string;
+  name: string;
+  phone: string;
+  orchardName: string;
+  location: string;
+  crops: string[];
+  lastLogin: string;
+}
 
-        return content;
-    } catch (error) {
-        console.error("Puter AI Error:", error);
-        return "Network slow hai, dobara puchein.";
-    }
-};
+export interface MandiData {
+  id: string;
+  crop: string;
+  market: string;
+  price: string;
+  trend: 'up' | 'down' | 'stable';
+}
 
-// Cloud KV Storage
-export const saveUserData = async (key: string, data: any) => {
-    return await (window as any).puter.kv.set(key, JSON.stringify(data));
-};
-
-export const getUserData = async (key: string) => {
-    const data = await (window as any).puter.kv.get(key);
+/**
+ * Get user data from Puter KV storage
+ */
+export async function getUserData(userId: string): Promise<UserData | null> {
+  try {
+    const data = await puter.kv.get(`fck_user_${userId}`);
     return data ? JSON.parse(data) : null;
-};
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    return null;
+  }
+}
 
-// 🍂 DISEASE ANALYSIS (Optimized)
-export const analyzeCropDisease = async (imageBase64: string, lang: string = 'en'): Promise<DiseaseAnalysis> => {
-    return new Promise((resolve) => {
-        // Faster Simulation (1.5s instead of 3s)
-        setTimeout(() => {
-            const diseases: DiseaseAnalysis[] = [
-                {
-                    diseaseName: "Apple Scab (Venturia inaequalis)",
-                    severity: "High",
-                    description: "Olive-green spots on leaves. Common in high humidity.",
-                    treatment: [
-                        "Spray Captan 50 WP (0.3%).",
-                        "Apply Difenoconazole 25 EC."
-                    ]
-                },
-                {
-                    diseaseName: "Alternaria Leaf Blotch",
-                    severity: "Medium",
-                    description: "Brown spots with yellow halos on leaves.",
-                    treatment: [
-                        "Spray Mancozeb 75 WP.",
-                        "Clean fallen leaves."
-                    ]
-                },
-                {
-                    diseaseName: "San Jose Scale",
-                    severity: "Low",
-                    description: "Red spots on fruit, scales on bark.",
-                    treatment: [
-                        "Apply Horticulture Mineral Oil (HMO).",
-                        "Scrub loose bark."
-                    ]
-                }
-            ];
-            const result = diseases[Math.floor(Math.random() * diseases.length)];
-            resolve(result);
-        }, 1500); // Reduced delay for snappy feel
-    });
-};
+/**
+ * Save user data to Puter KV storage
+ */
+export async function saveUserData(userId: string, data: UserData): Promise<boolean> {
+  try {
+    await puter.kv.set(`fck_user_${userId}`, JSON.stringify(data));
+    return true;
+  } catch (error) {
+    console.error('Error saving user data:', error);
+    return false;
+  }
+}
+
+/**
+ * Get Mandi (Market) data from Puter
+ */
+export async function getMandiData(): Promise<MandiData[]> {
+  try {
+    const data = await puter.kv.get('fck_mandi_db');
+    if (data) {
+      return JSON.parse(data);
+    }
+    // Default data if none exists
+    return [
+      { id: '1', crop: 'Apple (Delicious)', market: 'Kulgam', price: '800-1100', trend: 'up' },
+      { id: '2', crop: 'Apple (Kullu)', market: 'Sopore', price: '900-1250', trend: 'up' },
+      { id: '3', crop: 'Apple (American)', market: 'Srinagar', price: '600-850', trend: 'down' }
+    ];
+  } catch (error) {
+    console.error('Error fetching mandi data:', error);
+    return [];
+  }
+}
+
+/**
+ * Save Mandi data to Puter (Admin only)
+ */
+export async function saveMandiData(data: MandiData[]): Promise<boolean> {
+  try {
+    await puter.kv.set('fck_mandi_db', JSON.stringify(data));
+    return true;
+  } catch (error) {
+    console.error('Error saving mandi data:', error);
+    return false;
+  }
+}
+
+/**
+ * Get forum posts from Puter
+ */
+export async function getForumPosts(): Promise<any[]> {
+  try {
+    const data = await puter.kv.get('fck_forum_posts');
+    return data ? JSON.parse(data) : [];
+  } catch (error) {
+    console.error('Error fetching forum posts:', error);
+    return [];
+  }
+}
+
+/**
+ * Save forum posts to Puter
+ */
+export async function saveForumPosts(posts: any[]): Promise<boolean> {
+  try {
+    await puter.kv.set('fck_forum_posts', JSON.stringify(posts));
+    return true;
+  } catch (error) {
+    console.error('Error saving forum posts:', error);
+    return false;
+  }
+}
+
+/**
+ * Check if Puter is available
+ */
+export function isPuterAvailable(): boolean {
+  return typeof puter !== 'undefined' && puter !== null;
+}
