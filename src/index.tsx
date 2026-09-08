@@ -1,16 +1,1 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App';
-
-const rootElement = document.getElementById('root');
-
-if (rootElement) {
-  const root = ReactDOM.createRoot(rootElement);
-  root.render(
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>
-  );
-} else {
-  console.error("Fatal Error: 'root' element not found in index.html");
-}
+import React from 'react';\nimport ReactDOM from 'react-dom/client';\nimport App from './App';\n\nconst rootElement = document.getElementById('root');\n\nif (rootElement) {\n  try {\n    const root = ReactDOM.createRoot(rootElement);\n    root.render(\n      <React.StrictMode>\n        <App />\n      </React.StrictMode>\n    );\n  } catch (error) {\n    console.error('React render error:', error);\n    rootElement.innerHTML = '<div style=\"color: red; padding: 20px; font-family: monospace;\">Error loading app: ' + (error as Error).message + '</div>';\n  }\n} else {\n  console.error(\"Fatal Error: 'root' element not found in index.html\");\n}\n
